@@ -113,10 +113,10 @@ export default function PurchaseOrderForm({ order, suppliers, employees, materia
       ...newRow(),
       item_name: mat.material_name,
       material_id: mat.material_id,
-      quantity: mat.required_quantity + mat.surplus_quantity,
+      quantity: String(mat.required_quantity + mat.surplus_quantity),
       unit: mat.unit,
-      unit_price: mat.standard_price || 0,
-      amount: ((mat.required_quantity + mat.surplus_quantity) * (mat.standard_price || 0)),
+      unit_price: String(mat.standard_price || 0),
+      
     }))
     setItems(prev => [...prev.filter(r => r.item_name.trim()), ...newItems])
   }

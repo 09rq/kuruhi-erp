@@ -1,77 +1,70 @@
-export type SOStatus =
-  | 'draft'
-  | 'confirmed'
-  | 'in_production'
-  | 'delivered'
-  | 'invoiced'
-  | 'cancelled'
+export type SOStatus = 'draft' | 'confirmed' | 'in_production' | 'delivered' | 'invoiced' | 'cancelled'
 
 export const SO_STATUS_LABELS: Record<SOStatus, string> = {
-  draft:         '見積中',
-  confirmed:     '受注確定',
+  draft: '下書き',
+  confirmed: '受注確定',
   in_production: '製造中',
-  delivered:     '納品済',
-  invoiced:      '請求済',
-  cancelled:     'キャンセル',
+  delivered: '納品済み',
+  invoiced: '請求済み',
+  cancelled: 'キャンセル',
 }
 
 export const SO_STATUS_COLORS: Record<SOStatus, string> = {
-  draft:         'bg-gray-100 text-gray-600',
-  confirmed:     'bg-blue-100 text-blue-700',
-  in_production: 'bg-amber-100 text-amber-700',
-  delivered:     'bg-emerald-100 text-emerald-700',
-  invoiced:      'bg-purple-100 text-purple-700',
-  cancelled:     'bg-red-100 text-red-600',
+  draft: 'bg-gray-100 text-gray-700',
+  confirmed: 'bg-blue-100 text-blue-700',
+  in_production: 'bg-yellow-100 text-yellow-700',
+  delivered: 'bg-green-100 text-green-700',
+  invoiced: 'bg-purple-100 text-purple-700',
+  cancelled: 'bg-red-100 text-red-700',
 }
 
-// 次のステータスへの遷移マップ
 export const SO_NEXT_STATUS: Partial<Record<SOStatus, SOStatus>> = {
-  draft:         'confirmed',
-  confirmed:     'in_production',
+  draft: 'confirmed',
+  confirmed: 'in_production',
   in_production: 'delivered',
-  delivered:     'invoiced',
 }
 
-export interface SalesOrder {
-  id: string
-  order_number: string
-  client_id: string | null
-  order_date: string
-  desired_delivery_date: string | null
-  confirmed_delivery_date: string | null
-  status: SOStatus
-  assigned_to: string | null
-  notes: string | null
-  created_by: string | null
-  created_at: string
-  updated_at: string
-  items?: SalesOrderItem[]
+export interface SOItemRow {
+  _key?: string
+  id?: string
+  product_id?: string | null
+  product_variant_id?: string | null
+  product_name?: string
+  quantity?: number | string
+  unit_price?: number | string
+  desired_delivery_date?: string | null
+  notes?: string | null
+  amount?: number
+  sort_order?: number
 }
 
 export interface SalesOrderItem {
   id: string
-  order_id: string
-  product_id: string | null
-  product_variant_id: string | null
+  product_name: string
   quantity: number
   unit_price: number
   amount: number
-  desired_delivery_date: string | null
-  production_lot_id: string | null
-  notes: string | null
-  sort_order: number
-  created_at: string
-  updated_at: string
+  note: string | null
+  notes?: string | null
+  desired_delivery_date?: string | null
+  confirmed_delivery_date?: string | null
+  assigned_to?: string | null
 }
 
-/** フォーム用明細行 */
-export interface SOItemRow {
-  _key: string
-  id?: string
-  product_id: string
-  product_variant_id: string
-  quantity: string
-  unit_price: string
-  desired_delivery_date: string
-  notes: string
+export interface SalesOrder {
+  id: string
+  order_no: string
+  client_id: string
+  status: SOStatus
+  order_date: string
+  delivery_date: string | null
+  total_amount: number
+  note: string | null
+  notes?: string | null
+  desired_delivery_date?: string | null
+  confirmed_delivery_date?: string | null
+  assigned_to?: string | null
+  created_at: string
+  updated_at: string
+  items?: SOItemRow[]
 }

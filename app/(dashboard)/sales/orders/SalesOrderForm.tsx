@@ -95,7 +95,7 @@ export default function SalesOrderForm({ order, clients, products, variants, emp
 
   // ── 合計 ──
   const subtotal = items.reduce(
-    (s, r) => s + (parseInt(r.quantity) || 0) * (parseFloat(r.unit_price) || 0), 0
+    (s, r) => s + (parseInt(String(r.quantity ?? 0)) || 0) * (parseFloat(String(r.unit_price ?? 0)) || 0), 0
   )
 
   // ── 送信 ──
@@ -227,7 +227,7 @@ export default function SalesOrderForm({ order, clients, products, variants, emp
             <tbody className="divide-y divide-gray-50">
               {items.map((row) => {
                 const filteredVariants = variants.filter((v) => v.product_id === row.product_id)
-                const amount = (parseInt(row.quantity) || 0) * (parseFloat(row.unit_price) || 0)
+                const amount = (parseInt(String(row.quantity ?? 0)) || 0) * (parseFloat(String(row.unit_price ?? 0)) || 0)
                 const selectedProduct = row.product_id ? products.find((p) => p.id === row.product_id) : null
                 const isUnconfirmed = selectedProduct != null && !selectedProduct.cost_confirmed
                 return (
@@ -235,8 +235,8 @@ export default function SalesOrderForm({ order, clients, products, variants, emp
                     {/* 製品 */}
                     <td className="py-2 pr-2">
                       <div className="relative">
-                        <select value={row.product_id}
-                          onChange={(e) => handleProductChange(row._key, e.target.value)}
+                        <select value={row.product_id ?? ""}
+                          onChange={(e) => handleProductChange(row._key ?? "", e.target.value)}
                           className={`${selCls} pr-5`}>
                           <option value="">製品を選択</option>
                           {products.map((p) => (
@@ -252,8 +252,8 @@ export default function SalesOrderForm({ order, clients, products, variants, emp
                     {/* バリエーション */}
                     <td className="py-2 px-2">
                       <div className="relative">
-                        <select value={row.product_variant_id}
-                          onChange={(e) => updateRow(row._key, { product_variant_id: e.target.value })}
+                        <select value={row.product_variant_id ?? ""}
+                          onChange={(e) => updateRow(row._key ?? "", { product_variant_id: e.target.value })}
                           disabled={filteredVariants.length === 0}
                           className={`${selCls} pr-5 disabled:bg-gray-50 disabled:text-gray-400`}>
                           <option value="">共通</option>
@@ -268,14 +268,14 @@ export default function SalesOrderForm({ order, clients, products, variants, emp
                     </td>
                     {/* 数量 */}
                     <td className="py-2 px-2">
-                      <input type="number" value={row.quantity} min={1} step={1}
-                        onChange={(e) => updateRow(row._key, { quantity: e.target.value })}
+                      <input type="number" value={row.quantity ?? ""} min={1} step={1}
+                        onChange={(e) => updateRow(row._key ?? "", { quantity: e.target.value })}
                         className={numCls} />
                     </td>
                     {/* 単価 */}
                     <td className="py-2 px-2">
-                      <input type="number" value={row.unit_price} min={0} step={1}
-                        onChange={(e) => updateRow(row._key, { unit_price: e.target.value })}
+                      <input type="number" value={row.unit_price ?? ""} min={0} step={1}
+                        onChange={(e) => updateRow(row._key ?? "", { unit_price: e.target.value })}
                         className={numCls} />
                     </td>
                     {/* 金額 */}
@@ -284,20 +284,20 @@ export default function SalesOrderForm({ order, clients, products, variants, emp
                     </td>
                     {/* 明細納期 */}
                     <td className="py-2 px-2">
-                      <input type="date" value={row.desired_delivery_date}
-                        onChange={(e) => updateRow(row._key, { desired_delivery_date: e.target.value })}
+                      <input type="date" value={row.desired_delivery_date ?? ""}
+                        onChange={(e) => updateRow(row._key ?? "", { desired_delivery_date: e.target.value })}
                         className={cellCls} />
                     </td>
                     {/* 備考 */}
                     <td className="py-2 px-2">
-                      <input type="text" value={row.notes} placeholder="備考"
-                        onChange={(e) => updateRow(row._key, { notes: e.target.value })}
+                      <input type="text" value={row.notes ?? ""} placeholder="備考"
+                        onChange={(e) => updateRow(row._key ?? "", { notes: e.target.value })}
                         className={cellCls} />
                     </td>
                     {/* 削除 */}
                     <td className="py-2 pl-2">
                       {items.length > 1 && (
-                        <button type="button" onClick={() => removeRow(row._key)}
+                        <button type="button" onClick={() => removeRow(row._key ?? "")}
                           className="text-gray-300 hover:text-red-400 transition-colors text-base leading-none">×</button>
                       )}
                     </td>

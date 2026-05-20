@@ -19,6 +19,10 @@ const TX_TYPE_SIGN: Record<MaterialTransactionType, 1 | -1> = {
   other_in:         1,
   production_out:  -1,
   other_out:       -1,
+  use_out:         -1,
+  return_in:        1,
+  adjust:           1,
+  inventory:        1,
 }
 
 export default async function MaterialTransactionsPage({
