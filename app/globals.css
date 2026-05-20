@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #1F3864;
+  --color-navy-dark: #162a4e;
+  --color-navy-light: #2a4d8f;
+}
+
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+}

@@ -1,0 +1,4 @@
+name,short_name,name_kana,type,postal_code,address,phone,fax,email,contact_person,note
+株式会社サンプル,サンプル,サンプル,customer,130-0026,東京都墨田区両国4-8-11,03-0000-0000,03-0000-0001,sample@example.com,担当者名,備考
+株式会社外注サンプル,外注サンプル,ガイチュウサンプル,vendor_processing,130-0001,東京都墨田区吾妻橋1-1-1,03-1111-0000,,,,
+株式会社材料サンプル,材料サンプル,ザイリョウサンプル,vendor_material,130-0002,東京都墨田区業平1-1-1,03-2222-0000,,,,
