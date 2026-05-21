@@ -10,7 +10,6 @@ export default async function LoginPage({
   return (
     <div className="min-h-full flex flex-col items-center justify-center bg-gray-50">
       <div className="w-full max-w-md">
-        {/* ロゴ・タイトル */}
         <div className="text-center mb-8">
           <div
             className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
@@ -22,7 +21,6 @@ export default async function LoginPage({
           <p className="mt-1 text-sm text-gray-500">株式会社クルヒ 基幹システム</p>
         </div>
 
-        {/* ログインカード */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">ログイン</h2>
 
@@ -38,10 +36,7 @@ export default async function LoginPage({
 
           <form action={login} className="space-y-5">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 メールアドレス
               </label>
               <input
@@ -56,10 +51,7 @@ export default async function LoginPage({
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 パスワード
               </label>
               <input
@@ -81,6 +73,12 @@ export default async function LoginPage({
               ログイン
             </button>
           </form>
+
+          <div className="mt-4 text-center">
+            <a href="/reset-password" className="text-sm text-gray-500 hover:text-gray-700 underline">
+              パスワードをお忘れですか？
+            </a>
+          </div>
         </div>
 
         <p className="mt-6 text-center text-xs text-gray-400">
