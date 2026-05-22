@@ -312,6 +312,7 @@ export default function StocktakeDetailClient({
                         <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">材料原価</th>
                         <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">加工費</th>
                         <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">棚卸金額</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">備考</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -323,6 +324,17 @@ export default function StocktakeDetailClient({
                           <td className="px-4 py-3 text-right text-gray-700">¥{w.unit_cost.toLocaleString('ja-JP')}</td>
                           <td className="px-4 py-3 text-right text-gray-700">¥{w.process_cost.toLocaleString('ja-JP')}</td>
                           <td className="px-4 py-3 text-right font-medium text-gray-900">¥{w.total_amount.toLocaleString('ja-JP')}</td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              defaultValue={w.note ?? ''}
+                              onBlur={async e => {
+                                await supabase.from('stocktake_wip').update({ note: e.target.value || null }).eq('id', w.id)
+                              }}
+                              className="w-32 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              placeholder="備考"
+                            />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
