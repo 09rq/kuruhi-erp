@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
   { href: '/sales/report',  label: '売上集計',             icon: '📊' },
   { href: '/manufacturing', label: '製造指示・工程管理', icon: '🏭' },
   { href: '/inventory',    label: '在庫管理',           icon: '📦' },
+  { href: '/inventory/stocktake', label: '棚卸管理',           icon: '📋' },
   { href: '/accounting', label: '予実管理', icon: '📊' },
   { href: '/hr',           label: '人事・給与',         icon: '👥' },
   { href: '/reports',      label: 'レポート',           icon: '📊' },
