@@ -67,6 +67,51 @@ export async function updateLotStatus(lotId: string, status: LotStatus) {
 
   if (error) throw new Error(error.message)
 
+  // 完了時に製品在庫を加算
+  if (status === 'completed') {
+    const { data: lot } = await supabase
+      .from('production_lots')
+      .select('product_id, product_variant_id, planned_quantity, products(standard_cost)')
+      .eq('id', lotId)
+      .single()
+
+    if (lot) {
+      const product = lot.products as { standard_cost?: number } | null
+      const qty = lot.planned_quantity || 0
+      const unitCost = product?.standard_cost || 0
+
+      // current_stock を加算
+      const { data: prod } = await supabase
+        .from('products')
+        .select('current_stock')
+        .eq('id', lot.product_id)
+        .single()
+
+      if (prod) {
+        await supabase.from('products')
+          .update({
+            current_stock: (prod.current_stock || 0) + qty,
+            stock_updated_at: new Date().toISOString()
+          })
+          .eq('id', lot.product_id)
+      }
+
+      // product_stock_transactions に記録
+      await supabase.from('product_stock_transactions').insert({
+        product_id: lot.product_id,
+        product_variant_id: lot.product_variant_id || null,
+        transaction_type: 'production_in',
+        quantity: qty,
+        unit_cost: unitCost,
+        amount: qty * unitCost,
+        reference_type: 'production_lot',
+        reference_id: lotId,
+        note: '製造ロット完了',
+        transaction_date: new Date().toISOString().slice(0, 10),
+      })
+    }
+  }
+
   revalidatePath('/inventory/lots')
   revalidatePath(`/inventory/lots/${lotId}`)
 }

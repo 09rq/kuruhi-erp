@@ -167,6 +167,35 @@ export default function QuickDeliveryNote() {
         }
       }
 
+      // 製品在庫を減算
+      for (const item of validItems) {
+        if (item.product_no) {
+          const { data: product } = await supabase
+            .from('products')
+            .select('id, current_stock')
+            .eq('product_no', item.product_no)
+            .single()
+          if (product) {
+            const newStock = Math.max(0, (product.current_stock || 0) - item.quantity)
+            await supabase.from('products')
+              .update({ current_stock: newStock, stock_updated_at: new Date().toISOString() })
+              .eq('id', product.id)
+            await supabase.from('product_stock_transactions').insert({
+              product_id: product.id,
+              transaction_type: 'sales_out',
+              quantity: item.quantity,
+              unit_cost: item.unit_cost || 0,
+              amount: item.cost_amount || 0,
+              reference_type: 'delivery_note',
+              reference_id: dn.id,
+              note: `納品書 ${deliveryNumber}`,
+              transaction_date: deliveryDate,
+              created_by: user?.id,
+            })
+          }
+        }
+      }
+
       setMessage('保存しました')
       await generatePdf(deliveryNumber, validItems, customerId)
     } catch (e) {
