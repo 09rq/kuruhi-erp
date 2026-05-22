@@ -152,6 +152,13 @@ export default function StocktakeDetailClient({
           </span>
         </div>
         <div className="flex gap-2">
+          {status === 'completed' && (
+            <button
+              onClick={() => updateStatus('in_progress')}
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50">
+              再編集
+            </button>
+          )}
           {status === 'draft' && (
             <button onClick={() => updateStatus('in_progress')}
               className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-blue-600 hover:bg-blue-700">
@@ -165,6 +172,12 @@ export default function StocktakeDetailClient({
               棚卸完了
             </button>
           )}
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 disabled:opacity-50">
+            削除
+          </button>
         </div>
       </div>
 
