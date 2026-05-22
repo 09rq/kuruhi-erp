@@ -36,7 +36,7 @@ export default function NewStocktakePage() {
       // 材料在庫を自動取得してstocktake_materialsに登録
       const { data: materials } = await supabase
         .from('materials')
-        .select('id, current_stock, unit_price')
+        .select('id, current_stock, standard_price, month_end_price')
         .eq('is_active', true)
 
       if (materials && materials.length > 0) {
@@ -44,7 +44,7 @@ export default function NewStocktakePage() {
           stocktake_id: stocktake.id,
           material_id: m.id,
           system_quantity: m.current_stock || 0,
-          unit_price: m.unit_price || 0,
+          unit_price: m.month_end_price || m.standard_price || 0,
         }))
         await supabase.from('stocktake_materials').insert(matRows)
       }

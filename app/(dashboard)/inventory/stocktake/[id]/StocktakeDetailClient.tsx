@@ -85,6 +85,7 @@ export default function StocktakeDetailClient({
   const [prodData, setProdData] = useState<Product[]>(products)
   const [saving, setSaving] = useState<string | null>(null)
   const [status, setStatus] = useState(stocktake.status)
+  const [deleting, setDeleting] = useState(false)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     internal: true, outsource: true, pre_inspection: true
   })
@@ -110,6 +111,13 @@ export default function StocktakeDetailClient({
     setSaving(id)
     await supabase.from('stocktake_products').update({ actual_quantity: num }).eq('id', id)
     setSaving(null)
+  }
+
+  async function handleDelete() {
+    if (!confirm(`${stocktake.year_month}の棚卸データを削除しますか？この操作は元に戻せません。`)) return
+    setDeleting(true)
+    await supabase.from(`stocktakes`).delete().eq(`id`, stocktake.id)
+    router.push(`/inventory/stocktake`)
   }
 
   async function updateStatus(newStatus: string) {
