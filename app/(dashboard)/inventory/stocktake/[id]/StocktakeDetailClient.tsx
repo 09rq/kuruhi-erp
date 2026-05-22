@@ -86,6 +86,7 @@ export default function StocktakeDetailClient({
   const [saving, setSaving] = useState<string | null>(null)
   const [status, setStatus] = useState(stocktake.status)
   const [deleting, setDeleting] = useState(false)
+  const [hideZeroStock, setHideZeroStock] = useState(true)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     internal: true, outsource: true, pre_inspection: true
   })
@@ -351,7 +352,19 @@ export default function StocktakeDetailClient({
 
       {/* 製品タブ */}
       {activeTab === 'products' && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideZeroStock}
+                onChange={e => setHideZeroStock(e.target.checked)}
+                className="rounded"
+              />
+              在庫0を非表示
+            </label>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -406,6 +419,7 @@ export default function StocktakeDetailClient({
               </tr>
             </tfoot>
           </table>
+          </div>
         </div>
       )}
     </div>
