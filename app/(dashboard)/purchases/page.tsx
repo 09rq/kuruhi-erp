@@ -38,13 +38,21 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
           <h1 className="text-2xl font-bold text-gray-900">購買管理</h1>
           <p className="mt-1 text-sm text-gray-500">発注書の作成・管理</p>
         </div>
-        <Link
-          href="/purchases/new"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white"
-          style={{ backgroundColor: '#1F3864' }}
-        >
-          ＋ 発注書を作成
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/purchases/summary"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            📊 集計・分析
+          </Link>
+          <Link
+            href="/purchases/new"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white"
+            style={{ backgroundColor: '#1F3864' }}
+          >
+            ＋ 発注書を作成
+          </Link>
+        </div>
       </div>
 
       {/* ステータス集計 */}
