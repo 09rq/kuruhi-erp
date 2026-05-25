@@ -90,7 +90,6 @@ export default function NewStocktakePage() {
       const { data: products } = await supabase
         .from('products')
         .select('id, current_stock, standard_cost')
-        .gt('current_stock', 0)
 
       if (products && products.length > 0) {
         const prodRows = products.map(p => ({

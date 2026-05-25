@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import MonthEndPriceButton from './MonthEndPriceButton'
 
 // ─── 定数 ────────────────────────────────────────────────────────────────────
 const CATEGORIES = ['すべて', '革', '生地', '金具', 'ファスナー', '箱', 'その他'] as const

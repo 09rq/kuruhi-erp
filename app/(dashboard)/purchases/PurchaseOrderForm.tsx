@@ -8,7 +8,7 @@ import type { PurchaseOrder, POItemRow } from '@/lib/types/purchase-order'
 import type { EmployeeOption } from '@/lib/types/employee'
 
 interface Supplier { id: string; name: string; phone: string | null; fax: string | null; contact_person: string | null }
-interface MaterialOption { id: string; name: string; unit: string | null; standard_price: number | null }
+interface MaterialOption { id: string; code?: string | null; name: string; unit: string | null; standard_price: number | null }
 
 interface Props {
   order?: PurchaseOrder
