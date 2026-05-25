@@ -6,6 +6,7 @@ import { LOT_STATUS_LABELS, LOT_STATUS_COLORS, type LotStatus } from '@/lib/type
 import StatusButton from './StatusButton'
 
 import CreateLotButton from './CreateLotButton'
+import SalesOrderDeleteButton from './SalesOrderDeleteButton'
 
 function fmtDate(d: string | null) {
   if (!d) return '—'
@@ -108,6 +109,7 @@ export default async function SalesOrderDetailPage({
           >
             編集
           </Link>
+          <SalesOrderDeleteButton orderId={id} />
         </div>
       </div>
 

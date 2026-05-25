@@ -46,6 +46,8 @@ export default function PurchaseOrderForm({ order, suppliers, employees, materia
   const [orderDate, setOrderDate] = useState(order?.order_date ?? today())
   const [deliveryDate, setDeliveryDate] = useState(order?.desired_delivery_date ?? '')
   const [supplierId, setSupplierId] = useState(order?.supplier_id ?? '')
+  const [supplierSearch, setSupplierSearch] = useState('')
+  const [materialSearches, setMaterialSearches] = useState<Record<string, string>>({})
   const [supplierPhone, setSupplierPhone] = useState(order?.supplier_phone ?? '')
   const [supplierFax, setSupplierFax] = useState(order?.supplier_fax ?? '')
   const [supplierContact, setSupplierContact] = useState(order?.supplier_contact ?? '')
@@ -199,14 +201,29 @@ export default function PurchaseOrderForm({ order, suppliers, employees, materia
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="block text-xs font-medium text-gray-600 mb-1">発注先 <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <select value={supplierId} onChange={(e) => handleSupplierChange(e.target.value)} className={`${cls} appearance-none pr-7`}>
+            <div>
+              <input
+                type="text"
+                value={supplierSearch}
+                onChange={e => setSupplierSearch(e.target.value)}
+                placeholder="発注先名で検索..."
+                className={`${cls} rounded-b-none border-b-0`}
+              />
+              <select
+                value={supplierId}
+                onChange={(e) => handleSupplierChange(e.target.value)}
+                size={4}
+                className={`${cls} rounded-t-none`}
+              >
                 <option value="">選択してください</option>
-                {suppliers.map((s) => (
+                {suppliers.filter(s => {
+                  if (!supplierSearch) return true
+                  const normalize = (str: string) => str.normalize('NFKC').toLowerCase()
+                  return normalize(s.name).includes(normalize(supplierSearch))
+                }).map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">▼</span>
             </div>
           </div>
           <div>
@@ -260,18 +277,30 @@ export default function PurchaseOrderForm({ order, suppliers, employees, materia
                   <tr key={row._key} className="group">
                     <td className="py-2 pr-2">
                       <div className="space-y-1">
-                        <div className="relative">
+                        <div>
+                          <input
+                            type="text"
+                            value={materialSearches[row._key] ?? ''}
+                            onChange={e => setMaterialSearches(prev => ({ ...prev, [row._key]: e.target.value }))}
+                            placeholder="材料名で検索..."
+                            className="w-full pl-2 pr-2 py-1.5 border border-gray-200 rounded-t text-xs focus:outline-none focus:ring-1 focus:ring-[#1F3864] border-b-0"
+                          />
                           <select
                             value={row.material_id}
                             onChange={(e) => handleMaterialChange(row._key, e.target.value)}
-                            className="appearance-none w-full pl-2 pr-6 py-1.5 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-[#1F3864] bg-white"
+                            size={3}
+                            className="w-full pl-2 pr-2 py-1 border border-gray-200 rounded-b text-xs focus:outline-none focus:ring-1 focus:ring-[#1F3864] bg-white"
                           >
                             <option value="">材料から選択</option>
-                            {materials.map((m) => (
+                            {materials.filter(m => {
+                              const search = materialSearches[row._key] ?? ''
+                              if (!search) return true
+                              const normalize = (s: string) => s.normalize('NFKC').toLowerCase()
+                              return normalize(m.name).includes(normalize(search)) || normalize(m.code ?? '').includes(normalize(search))
+                            }).map((m) => (
                               <option key={m.id} value={m.id}>{m.name}</option>
                             ))}
                           </select>
-                          <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400" style={{ fontSize: 9 }}>▼</span>
                         </div>
                         <input
                           type="text"
