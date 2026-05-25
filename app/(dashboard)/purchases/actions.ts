@@ -153,6 +153,55 @@ export async function updatePOStatus(id: string, status: POStatus) {
     .update({ status })
     .eq('id', id)
   if (error) throw new Error(error.message)
+
+  // 納品済になった時に材料在庫を自動加算
+  if (status === 'delivered') {
+    const { data: po } = await supabase
+      .from('purchase_orders')
+      .select('order_date, purchase_order_items(material_id, quantity, unit_price, item_name)')
+      .eq('id', id)
+      .single()
+
+    if (po) {
+      const today = new Date().toISOString().slice(0, 10)
+      for (const item of po.purchase_order_items || []) {
+        if (!item.material_id) continue
+
+        // 現在庫を取得して加算
+        const { data: mat } = await supabase
+          .from('materials')
+          .select('current_stock')
+          .eq('id', item.material_id)
+          .single()
+
+        if (mat) {
+          const newStock = Number(mat.current_stock) + Number(item.quantity)
+          await supabase
+            .from('materials')
+            .update({
+              current_stock: newStock,
+              month_end_price: item.unit_price,
+              stock_updated_at: new Date().toISOString(),
+            })
+            .eq('id', item.material_id)
+
+          // トランザクション記録
+          await supabase.from('material_stock_transactions').insert({
+            material_id: item.material_id,
+            transaction_type: 'purchase_in',
+            quantity: Number(item.quantity),
+            unit_price: item.unit_price,
+            amount: Number(item.quantity) * Number(item.unit_price),
+            reference_type: 'purchase_order',
+            reference_id: id,
+            note: `発注書 納品済`,
+            transaction_date: today,
+          })
+        }
+      }
+    }
+  }
+
   revalidatePath('/purchases')
 }
 
