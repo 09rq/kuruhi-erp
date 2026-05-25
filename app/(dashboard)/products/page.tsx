@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import StandardCostUpdateButton from './StandardCostUpdateButton'
 import {
   PRODUCT_STATUS_LABELS,
   PRODUCT_STATUS_COLORS,
@@ -112,6 +113,7 @@ export default async function ProductsPage({
           <p className="mt-1 text-sm text-gray-500">製品の登録・管理</p>
         </div>
         <div className="flex items-center gap-3">
+          <StandardCostUpdateButton />
           <ProductCSVButton
             products={products.map((p) => ({
               ...p,
