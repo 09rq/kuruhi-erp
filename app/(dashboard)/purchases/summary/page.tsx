@@ -22,10 +22,11 @@ export default async function PurchaseSummaryPage() {
     `)
     .order('purchase_date', { ascending: false })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (
     <PurchaseSummaryClient
-      materialTx={materialTx || []}
-      outsourceTx={outsourceTx || []}
+      materialTx={(materialTx || []) as any}
+      outsourceTx={(outsourceTx || []) as any}
     />
   )
 }
