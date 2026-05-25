@@ -39,7 +39,7 @@ export default async function InventoryMaterialsPage({
 
   let dbQuery = supabase
     .from('materials')
-    .select('id, name, code, category, unit, current_stock, standard_price, stock_updated_at, min_stock')
+    .select('id, name, code, category, unit, current_stock, standard_price, month_start_price, month_end_price, stock_updated_at, min_stock')
     .order('category')
     .order('name')
 
@@ -202,6 +202,8 @@ export default async function InventoryMaterialsPage({
                 <th className="px-4 py-3 text-right font-medium text-gray-600 w-28">現在庫</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-600 w-28">最低在庫</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600 w-12">単位</th>
+                <th className="px-4 py-3 text-right font-medium text-gray-600 w-28">期首単価</th>
+                <th className="px-4 py-3 text-right font-medium text-gray-600 w-28">期末単価</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-600 w-32">在庫金額</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600 w-28">最終更新</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-600 w-36">操作</th>
@@ -240,6 +242,12 @@ export default async function InventoryMaterialsPage({
                       {minStock != null ? fmtNum(minStock) : '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{m.unit ?? '—'}</td>
+                    <td className="px-4 py-3 text-right font-mono text-gray-500 text-xs">
+                      {m.month_start_price != null ? fmtJPY(Number(m.month_start_price)) : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-gray-500 text-xs">
+                      {m.month_end_price != null ? fmtJPY(Number(m.month_end_price)) : '—'}
+                    </td>
                     <td className="px-4 py-3 text-right font-mono text-gray-700">
                       {stockValue != null ? fmtJPY(stockValue) : '—'}
                     </td>
