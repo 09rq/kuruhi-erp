@@ -85,12 +85,15 @@ export default async function InventoryMaterialsPage({
           <h1 className="text-2xl font-bold text-gray-900">材料在庫</h1>
           <p className="mt-1 text-sm text-gray-500">材料ごとの現在庫と入出庫管理</p>
         </div>
-        <a
-          href={csvHref}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+        <div className="flex items-center gap-3">
+          <MonthEndPriceButton />
+          <a
+            href={csvHref}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors"
         >
-          ↓ CSVダウンロード
-        </a>
+            ↓ CSVダウンロード
+          </a>
+        </div>
       </div>
 
       {/* ─── 在庫不足アラートバナー ─── */}
