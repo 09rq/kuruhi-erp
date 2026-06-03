@@ -271,6 +271,7 @@ export default function EvaluationPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900">人事評価シート</h1>
+          <a href="/evaluation/goals" className="text-xs text-blue-600 hover:underline mt-0.5 block">⚙️ 評価項目を管理する</a>
           <p className="text-sm text-gray-500">第{fiscalYear}期</p>
         </div>
         <div className="flex items-center gap-2">
