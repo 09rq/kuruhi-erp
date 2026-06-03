@@ -107,6 +107,15 @@ export default function FiscalYearTarget() {
     setShowAdd(false)
   }
 
+  async function handleDelete(id: string, fiscalYear: number) {
+    if (!confirm(`第${fiscalYear}期の目標を削除しますか？この操作は元に戻せません。`)) return
+    try {
+      await supabase.from('fiscal_year_targets').delete().eq('id', id)
+      setMessage('削除しました')
+      fetchData()
+    } catch { setMessage('削除に失敗しました') }
+  }
+
   function handleAddClick() {
     setEditing(null)
     resetForm()
@@ -200,7 +209,10 @@ export default function FiscalYearTarget() {
                 {target.memo && <span className="text-xs text-gray-400 ml-2">（{target.memo}）</span>}
               </div>
               {true && (
-                <button onClick={() => startEdit(target)} className="text-xs text-blue-600 hover:underline">編集</button>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => startEdit(target)} className="text-xs text-blue-600 hover:underline">編集</button>
+                  <button onClick={() => handleDelete(target.id, target.fiscal_year)} className="text-xs text-red-500 hover:underline">削除</button>
+                </div>
               )}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
