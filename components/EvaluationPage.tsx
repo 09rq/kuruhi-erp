@@ -71,6 +71,8 @@ export default function EvaluationPage() {
     company: true, skill: true, challenge: true, teamwork: true,
   })
   const [canViewAll, setCanViewAll] = useState(false)
+  const [fiscalYear, setFiscalYear] = useState(63)
+  const [availableFiscalYears, setAvailableFiscalYears] = useState<number[]>([63, 64])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -78,6 +80,8 @@ export default function EvaluationPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { data: members } = await supabase.from('kpi_members').select('*').order('department')
+      const { data: fyList } = await supabase.from('fiscal_year_targets').select('fiscal_year').order('fiscal_year', { ascending: false })
+      if (fyList && fyList.length > 0) setAvailableFiscalYears(fyList.map((r: {fiscal_year: number}) => r.fiscal_year))
       const me = members?.find((m: KpiMember) => m.email === user.email)
       setMyMember(me || null)
       setAllMembers(members || [])
@@ -86,18 +90,18 @@ export default function EvaluationPage() {
       if (!target) return
       const { data: goalsData } = await supabase
         .from('eval_goals').select('*')
-        .eq('fiscal_year', 63).eq('period', period)
+        .eq('fiscal_year', fiscalYear).eq('period', period)
         .or(`member_id.eq.${target.id},member_id.is.null`)
         .order('category').order('sort_order')
       const { data: scoresData } = await supabase
         .from('eval_scores').select('*')
-        .eq('member_id', target.id).eq('fiscal_year', 63).eq('period', period)
+        .eq('member_id', target.id).eq('fiscal_year', fiscalYear).eq('period', period)
       setGoals(goalsData || [])
       const scoresMap: Record<string, EvalScore> = {}
       scoresData?.forEach((s: EvalScore) => { scoresMap[s.eval_goal_id] = s })
       setScores(scoresMap)
     } catch (e) { console.error(e) } finally { setLoading(false) }
-  }, [supabase, selectedMember, period])
+  }, [supabase, selectedMember, period, fiscalYear])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -119,7 +123,7 @@ export default function EvaluationPage() {
     try {
       for (const score of Object.values(scores)) {
         await supabase.from('eval_scores').upsert({
-          ...score, fiscal_year: 63, period,
+          ...score, fiscal_year: fiscalYear, period,
         }, { onConflict: 'eval_goal_id,member_id,fiscal_year,period' })
       }
       setSaveMessage('保存しました')
@@ -172,7 +176,7 @@ export default function EvaluationPage() {
       const MyDoc = () => (
         <Document>
           <Page size="A4" style={styles.page}>
-            <Text style={styles.title}>人事評価シート　第63期（{PERIOD_LABELS[period]}）</Text>
+            <Text style={styles.title}>人事評価シート　第{fiscalYear}期（{PERIOD_LABELS[period]}）</Text>
             <Text style={styles.subtitle}>株式会社クルヒ　作成日: {new Date().toLocaleDateString('ja-JP')}</Text>
             {period === 'first_half' && <Text style={styles.badge}>※冬季賞与評価対象</Text>}
             {period === 'full_year' && <Text style={styles.badge}>※夏季賞与・昇給評価対象</Text>}
@@ -230,7 +234,7 @@ export default function EvaluationPage() {
               <View style={styles.signBox}><Text style={styles.signLabel}>承認（安田 明宏）</Text></View>
               <View style={styles.signBox}><Text style={styles.signLabel}>面談日：　　年　　月　　日</Text></View>
             </View>
-            <Text style={styles.footer}>株式会社クルヒ　人事評価シート　第63期　機密文書　©{new Date().getFullYear()}</Text>
+            <Text style={styles.footer}>株式会社クルヒ　人事評価シート　第{fiscalYear}期　機密文書　©{new Date().getFullYear()}</Text>
           </Page>
         </Document>
       )
@@ -238,7 +242,7 @@ export default function EvaluationPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `評価シート_${targetMember.name}_第63期_${PERIOD_LABELS[period]}.pdf`
+      a.download = `評価シート_${targetMember.name}_第${fiscalYear}期_${PERIOD_LABELS[period]}.pdf`
       a.click()
       URL.revokeObjectURL(url)
     } catch (e) {
@@ -267,7 +271,7 @@ export default function EvaluationPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900">人事評価シート</h1>
-          <p className="text-sm text-gray-500">第63期（2025年6月〜2026年5月）</p>
+          <p className="text-sm text-gray-500">第{fiscalYear}期</p>
         </div>
         <div className="flex items-center gap-2">
           {saveMessage && <span className="text-xs text-green-600 font-medium">{saveMessage}</span>}
@@ -282,6 +286,18 @@ export default function EvaluationPage() {
       </div>
 
       <div className="flex gap-3 mb-6 flex-wrap">
+        <div>
+          <label className="text-xs font-medium text-gray-500 mb-1 block">期</label>
+          <select
+            value={fiscalYear}
+            onChange={e => setFiscalYear(Number(e.target.value))}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {availableFiscalYears.map(fy => (
+              <option key={fy} value={fy}>第{fy}期</option>
+            ))}
+          </select>
+        </div>
         {canViewAll && (
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1 block">対象メンバー</label>
