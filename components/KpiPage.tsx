@@ -98,7 +98,8 @@ export default function KpiPage() {
       const { data: fyTargets } = await supabase.from('fiscal_year_targets').select('*').eq('fiscal_year', fiscalYear).single()
       const { data: allFY } = await supabase.from('fiscal_year_targets').select('fiscal_year').order('fiscal_year', { ascending: false })
       setFiscalYearTargets(fyTargets || null)
-      setAllFiscalYears((allFY || []).map((r: {fiscal_year: number}) => r.fiscal_year))
+      const fyList = (allFY || []).map((r: {fiscal_year: number}) => r.fiscal_year)
+      setAllFiscalYears(fyList.length > 0 ? fyList : [63, 64])
       if (fyTargets) {
         setTargetInput({
           revenue_target: fyTargets.revenue_target,
