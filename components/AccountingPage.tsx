@@ -455,7 +455,7 @@ export default function AccountingPage() {
         <KpiTargetSettings />
       )}
       {activeTab === "dashboard" && (
-        <FiscalYearTarget />
+        <><FiscalYearTarget /><div className="mt-4 text-right"><a href="/accounting/budget" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">📊 年間予算を入力する</a></div></>
       )}
     </div>
   )
