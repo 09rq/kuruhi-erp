@@ -45,6 +45,8 @@ export default function AccountingPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadMessage, setUploadMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [selectedMonth, setSelectedMonth] = useState('')
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<number | null>(null)
+  const [fiscalYearTargets, setFiscalYearTargets] = useState<{fiscal_year: number; start_month: string; end_month: string}[]>([])
   const [reportType, setReportType] = useState<'pl' | 'mfg' | 'bs'>('pl')
 
   const fetchData = useCallback(async () => {
@@ -76,6 +78,8 @@ export default function AccountingPage() {
       if (!selectedMonth && history && history.length > 0) {
         setSelectedMonth(history[0].year_month)
       }
+      const { data: fyData } = await supabase.from('fiscal_year_targets').select('fiscal_year, start_month, end_month').order('fiscal_year', { ascending: false })
+      setFiscalYearTargets(fyData || [])
     } catch (e) { console.error(e) } finally { setLoading(false) }
   }, [supabase, selectedMonth])
 
@@ -264,7 +268,27 @@ export default function AccountingPage() {
       {activeTab === 'dashboard' && (<CostTrendChart />)}
       {activeTab === 'dashboard' && (
         <div>
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-3 mb-6 flex-wrap">
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">期で絞り込む</label>
+              <select
+                value={selectedFiscalYear ?? ''}
+                onChange={e => {
+                  const fy = e.target.value ? Number(e.target.value) : null
+                  setSelectedFiscalYear(fy)
+                  if (fy) {
+                    const target = fiscalYearTargets.find(t => t.fiscal_year === fy)
+                    if (target) setSelectedMonth(target.start_month)
+                  }
+                }}
+                className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">すべての期</option>
+                {fiscalYearTargets.map(t => (
+                  <option key={t.fiscal_year} value={t.fiscal_year}>第{t.fiscal_year}期</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">表示する月</label>
               <select
@@ -273,9 +297,13 @@ export default function AccountingPage() {
                 className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="">月を選択</option>
-                {[...new Set(budgetActuals.map(a => a.year_month))].sort().reverse().map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
+                {(() => {
+                  const allMonths = [...new Set(budgetActuals.map(a => a.year_month))].sort().reverse()
+                  if (!selectedFiscalYear) return allMonths.map(m => <option key={m} value={m}>{m}</option>)
+                  const target = fiscalYearTargets.find(t => t.fiscal_year === selectedFiscalYear)
+                  if (!target) return allMonths.map(m => <option key={m} value={m}>{m}</option>)
+                  return allMonths.filter(m => m >= target.start_month && m <= target.end_month).map(m => <option key={m} value={m}>{m}</option>)
+                })()}
               </select>
             </div>
           </div>
