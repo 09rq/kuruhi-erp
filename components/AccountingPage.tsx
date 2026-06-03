@@ -46,7 +46,7 @@ export default function AccountingPage() {
   const [uploadMessage, setUploadMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [selectedMonth, setSelectedMonth] = useState('')
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<number | null>(null)
-  const [fiscalYearTargets, setFiscalYearTargets] = useState<{fiscal_year: number; start_month: string; end_month: string}[]>([])
+  const [fiscalYearTargets, setFiscalYearTargets] = useState<{fiscal_year: number; start_month: string; end_month: string; material_rate_target: number; outsource_rate_target: number; labor_rate_target: number; freight_rate_target: number}[]>([])
   const [reportType, setReportType] = useState<'pl' | 'mfg' | 'bs'>('pl')
 
   const fetchData = useCallback(async () => {
@@ -78,7 +78,7 @@ export default function AccountingPage() {
       if (!selectedMonth && history && history.length > 0) {
         setSelectedMonth(history[0].year_month)
       }
-      const { data: fyData } = await supabase.from('fiscal_year_targets').select('fiscal_year, start_month, end_month').order('fiscal_year', { ascending: false })
+      const { data: fyData } = await supabase.from('fiscal_year_targets').select('*').order('fiscal_year', { ascending: false })
       setFiscalYearTargets(fyData || [])
     } catch (e) { console.error(e) } finally { setLoading(false) }
   }, [supabase, selectedMonth])
@@ -265,7 +265,7 @@ export default function AccountingPage() {
       </div>
 
       {activeTab === 'dashboard' && revenue === 0 && (<div></div>)}
-      {activeTab === 'dashboard' && (<CostTrendChart />)}
+      {activeTab === 'dashboard' && (<CostTrendChart fiscalYearTarget={selectedFiscalYear ? fiscalYearTargets.find(t => t.fiscal_year === selectedFiscalYear) ?? null : null} />)}
       {activeTab === 'dashboard' && (
         <div>
           <div className="flex gap-3 mb-6 flex-wrap">
@@ -480,7 +480,7 @@ export default function AccountingPage() {
         <SgaTable yearMonth={selectedMonth} />
       )}
       {activeTab === "dashboard" && (
-        <KpiTargetSettings />
+        <KpiTargetSettings fiscalYear={selectedFiscalYear} />
       )}
       {activeTab === "dashboard" && (
         <><FiscalYearTarget /><div className="mt-4 text-right"><a href="/accounting/budget" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">📊 年間予算を入力する</a></div></>

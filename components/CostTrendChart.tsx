@@ -14,11 +14,24 @@ interface MonthlyCost {
   freight_cost: number
 }
 
-const TARGETS = { material: 18.5, outsource: 43.5, labor: 7.0, freight: 1.0 }
+const DEFAULT_TARGETS = { material: 18.5, outsource: 43.5, labor: 7.0, freight: 1.0 }
 const COLORS = { material: '#3b82f6', outsource: '#f59e0b', labor: '#10b981', freight: '#ef4444', gross: '#8b5cf6' }
 
-export default function CostTrendChart() {
+export default function CostTrendChart({ fiscalYearTarget }: { 
+  fiscalYearTarget?: { 
+    material_rate_target: number
+    outsource_rate_target: number
+    labor_rate_target: number
+    freight_rate_target: number
+  } | null 
+}) {
   const supabase = createClient()
+  const TARGETS = {
+    material: fiscalYearTarget?.material_rate_target ?? DEFAULT_TARGETS.material,
+    outsource: fiscalYearTarget?.outsource_rate_target ?? DEFAULT_TARGETS.outsource,
+    labor: fiscalYearTarget?.labor_rate_target ?? DEFAULT_TARGETS.labor,
+    freight: fiscalYearTarget?.freight_rate_target ?? DEFAULT_TARGETS.freight,
+  }
   const [data, setData] = useState<Record<string, string | number>[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -64,9 +77,9 @@ export default function CostTrendChart() {
           <XAxis dataKey="month" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 60]} />
           <Tooltip formatter={(v, n) => [`${v}%`, String(n)]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-          <ReferenceLine y={18.5} stroke="#3b82f6" strokeDasharray="4 4" strokeOpacity={0.4} />
-          <ReferenceLine y={43.5} stroke="#f59e0b" strokeDasharray="4 4" strokeOpacity={0.4} />
-          <ReferenceLine y={7.0} stroke="#10b981" strokeDasharray="4 4" strokeOpacity={0.4} />
+          <ReferenceLine y={TARGETS.material} stroke="#3b82f6" strokeDasharray="4 4" strokeOpacity={0.4} />
+          <ReferenceLine y={TARGETS.outsource} stroke="#f59e0b" strokeDasharray="4 4" strokeOpacity={0.4} />
+          <ReferenceLine y={TARGETS.labor} stroke="#10b981" strokeDasharray="4 4" strokeOpacity={0.4} />
           <Line type="monotone" dataKey="材料費率" stroke={COLORS.material} strokeWidth={2} dot={{ r: 4 }} />
           <Line type="monotone" dataKey="外注加工費率" stroke={COLORS.outsource} strokeWidth={2} dot={{ r: 4 }} />
           <Line type="monotone" dataKey="労務費率" stroke={COLORS.labor} strokeWidth={2} dot={{ r: 4 }} />

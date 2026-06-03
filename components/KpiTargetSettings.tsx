@@ -12,7 +12,7 @@ interface KpiTarget {
   updated_at: string
 }
 
-export default function KpiTargetSettings() {
+export default function KpiTargetSettings({ fiscalYear }: { fiscalYear?: number | null }) {
   const supabase = createClient()
   const [targets, setTargets] = useState<KpiTarget[]>([])
   const [loading, setLoading] = useState(true)
@@ -31,9 +31,30 @@ export default function KpiTargetSettings() {
         setMyRole(roleData?.role ?? null)
       }
       const { data } = await supabase.from('kpi_targets').select('*').order('target_rate', { ascending: false })
+      
+      // 期が選択されている場合はfiscal_year_targetsから上書き
+      if (fiscalYear) {
+        const { data: fyTarget } = await supabase
+          .from('fiscal_year_targets')
+          .select('*')
+          .eq('fiscal_year', fiscalYear)
+          .single()
+        
+        if (fyTarget && data) {
+          const updated = data.map((t: KpiTarget) => {
+            if (t.account_name === '材料費率') return { ...t, target_rate: fyTarget.material_rate_target }
+            if (t.account_name === '外注加工費率') return { ...t, target_rate: fyTarget.outsource_rate_target }
+            if (t.account_name === '労務費率') return { ...t, target_rate: fyTarget.labor_rate_target }
+            if (t.account_name === '荷造運賃率') return { ...t, target_rate: fyTarget.freight_rate_target }
+            return t
+          })
+          setTargets(updated)
+          return
+        }
+      }
       setTargets(data || [])
     } catch (e) { console.error(e) } finally { setLoading(false) }
-  }, [supabase])
+  }, [supabase, fiscalYear])
 
   useEffect(() => { fetchData() }, [fetchData])
 
