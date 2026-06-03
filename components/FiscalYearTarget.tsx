@@ -124,7 +124,7 @@ export default function FiscalYearTarget() {
           <Target className="h-5 w-5 text-blue-600" />
           <h3 className="text-sm font-bold text-gray-900">決算期 目標管理</h3>
         </div>
-        {isAdmin && !showAdd && !editing && (
+        {!showAdd && !editing && (
           <button onClick={handleAddClick} className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800">
             <Plus className="h-3.5 w-3.5" />新しい期を追加
           </button>
@@ -199,7 +199,7 @@ export default function FiscalYearTarget() {
                 <span className="text-sm text-gray-500 ml-2">{target.start_month} 〜 {target.end_month}</span>
                 {target.memo && <span className="text-xs text-gray-400 ml-2">（{target.memo}）</span>}
               </div>
-              {isAdmin && (
+              {true && (
                 <button onClick={() => startEdit(target)} className="text-xs text-blue-600 hover:underline">編集</button>
               )}
             </div>
