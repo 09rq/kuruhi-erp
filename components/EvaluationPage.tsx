@@ -90,7 +90,7 @@ export default function EvaluationPage() {
       if (!target) return
       const { data: goalsData } = await supabase
         .from('eval_goals').select('*')
-        .eq('fiscal_year', fiscalYear).eq('period', period)
+        .eq('fiscal_year', fiscalYear).in('period', [period, 'full_year'])
         .or(`member_id.eq.${target.id},member_id.is.null`)
         .order('category').order('sort_order')
       const { data: scoresData } = await supabase
