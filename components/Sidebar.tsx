@@ -11,26 +11,56 @@ interface NavItem {
   disabled?: boolean
 }
 
-const navItems: NavItem[] = [
-  { href: '/',             label: 'ダッシュボード',     icon: '🏠' },
-  { href: '/customers',    label: '取引先管理',         icon: '🏢' },
-  { href: '/materials',    label: '材料登録',           icon: '🧵' },
-  { href: '/products',     label: '製品マスタ',         icon: '👜' },
-  { href: '/bom',          label: 'BOM・部品表',        icon: '📋' },
-  { href: '/estimates',    label: '御見積書',           icon: '📄' },
-  { href: '/sales/orders', label: '受注管理',           icon: '💼' },
-  { href: '/purchases',    label: '購買管理（発注）',   icon: '🛒' },
-  { href: '/delivery',     label: '納品書発行',          icon: '📦' },
-  { href: '/sales/report',  label: '売上集計',             icon: '📊' },
-  { href: '/manufacturing', label: '製造指示・工程管理', icon: '🏭' },
-  { href: '/inventory',    label: '在庫管理',           icon: '📦' },
-  { href: '/inventory/stocktake', label: '棚卸管理',           icon: '📋' },
-  { href: '/accounting', label: '予実管理', icon: '📊' },
-  { href: '/hr',           label: '人事・給与',         icon: '👥' },
-  { href: '/reports',      label: 'レポート',           icon: '📊' },
-  { href: '/kpi',          label: 'KPI・目標管理',      icon: '🎯' },
-  { href: '/evaluation',   label: '人事評価',           icon: '📝' },
-  { href: '/settings',     label: '設定',               icon: '⚙️' },
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: '',
+    items: [
+      { href: '/', label: 'ダッシュボード', icon: '🏠' },
+    ],
+  },
+  {
+    label: '日々の業務',
+    items: [
+      { href: '/sales/orders', label: '受注管理',           icon: '💼' },
+      { href: '/estimates',    label: '御見積書',           icon: '📄' },
+      { href: '/purchases',    label: '購買管理（発注・仕入）', icon: '🛒' },
+      { href: '/delivery',     label: '納品書発行',          icon: '📦' },
+      { href: '/manufacturing', label: '製造指示・工程管理', icon: '🏭' },
+      { href: '/inventory',    label: '在庫管理',           icon: '📦' },
+      { href: '/sales/report', label: '売上集計',           icon: '📈' },
+    ],
+  },
+  {
+    label: '登録・マスタ管理',
+    items: [
+      { href: '/customers',    label: '取引先管理',         icon: '🏢' },
+      { href: '/materials',    label: '材料登録',           icon: '🧵' },
+      { href: '/products',     label: '製品マスタ',         icon: '👜' },
+      { href: '/bom',          label: 'BOM・部品表',        icon: '📐' },
+      { href: '/inventory/stocktake', label: '棚卸管理',   icon: '📋' },
+    ],
+  },
+  {
+    label: '経営・管理職',
+    items: [
+      { href: '/accounting',   label: '予実管理',           icon: '📊' },
+      { href: '/kpi',          label: 'KPI・目標管理',      icon: '🎯' },
+      { href: '/evaluation',   label: '人事評価',           icon: '📝' },
+      { href: '/hr',           label: '人事・給与',         icon: '👥' },
+      { href: '/reports',      label: 'レポート',           icon: '📋' },
+    ],
+  },
+  {
+    label: 'システム',
+    items: [
+      { href: '/settings',     label: '設定',               icon: '⚙️' },
+    ],
+  },
 ]
 
 export default function Sidebar({ userEmail }: { userEmail: string }) {
@@ -51,45 +81,54 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
 
       {/* ナビゲーション */}
       <nav className="flex-1 overflow-y-auto py-4 px-3">
-        <ul className="space-y-0.5">
-          {navItems.map((item) => {
-            const isActive =
-              !item.disabled && (
-                item.href === '/'
-                  ? pathname === '/'
-                  : pathname.startsWith(item.href)
-              )
+        {navGroups.map((group, groupIdx) => (
+          <div key={groupIdx} className={groupIdx > 0 ? 'mt-4' : ''}>
+            {group.label && (
+              <p className="text-white/40 text-xs font-medium px-3 mb-1 uppercase tracking-wider">
+                {group.label}
+              </p>
+            )}
+            <ul className="space-y-0.5">
+              {group.items.map((item) => {
+                const isActive =
+                  !item.disabled && (
+                    item.href === '/'
+                      ? pathname === '/'
+                      : pathname.startsWith(item.href)
+                  )
 
-            return (
-              <li key={item.href}>
-                {item.disabled ? (
-                  <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/30 cursor-not-allowed select-none">
-                    <span className="text-base">{item.icon}</span>
-                    <span className="flex-1">{item.label}</span>
-                    <span className="text-[10px] font-medium bg-white/10 text-white/40 px-1.5 py-0.5 rounded">
-                      Soon
-                    </span>
-                  </div>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                      ${
-                        isActive
-                          ? 'bg-white/20 text-white font-medium'
-                          : 'text-white/70 hover:bg-white/10 hover:text-white'
-                      }
-                    `}
-                  >
-                    <span className="text-base">{item.icon}</span>
-                    <span>{item.label}</span>
-                  </Link>
-                )}
-              </li>
-            )
-          })}
-        </ul>
+                return (
+                  <li key={item.href}>
+                    {item.disabled ? (
+                      <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/30 cursor-not-allowed select-none">
+                        <span className="text-base">{item.icon}</span>
+                        <span className="flex-1">{item.label}</span>
+                        <span className="text-[10px] font-medium bg-white/10 text-white/40 px-1.5 py-0.5 rounded">
+                          Soon
+                        </span>
+                      </div>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className={`
+                          flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          ${
+                            isActive
+                              ? 'bg-white/20 text-white font-medium'
+                              : 'text-white/70 hover:bg-white/10 hover:text-white'
+                          }
+                        `}
+                      >
+                        <span className="text-base">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </Link>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       {/* ユーザー情報・ログアウト */}
