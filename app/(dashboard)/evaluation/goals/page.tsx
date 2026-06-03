@@ -123,8 +123,8 @@ export default function EvalGoalsPage() {
     try {
       for (const goal of goals) {
         if (goal.id.startsWith('new-')) {
-          const { id: _, ...data } = goal
-          void id
+          const { id: _id, ...data } = goal
+          void _id
           await supabase.from('eval_goals').insert({
             ...data,
             fiscal_year: fiscalYear,
