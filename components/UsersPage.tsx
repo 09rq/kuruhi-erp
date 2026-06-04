@@ -38,6 +38,9 @@ export default function UsersPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('sales')
   const [inviting, setInviting] = useState(false)
+  const [settingPassword, setSettingPassword] = useState<string | null>(null)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [showPasswordForm, setShowPasswordForm] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -90,6 +93,31 @@ export default function UsersPage() {
       setMessage({ type: 'error', text: 'ロールの変更に失敗しました' })
     } finally {
       setSaving(null)
+    }
+  }
+
+  async function handleSetPassword(userId: string) {
+    if (!passwordInput || passwordInput.length < 8) {
+      setMessage({ type: 'error', text: 'パスワードは8文字以上で入力してください' })
+      return
+    }
+    setSettingPassword(userId)
+    setMessage(null)
+    try {
+      const res = await fetch('/api/admin/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, password: passwordInput }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setMessage({ type: 'success', text: 'パスワードを設定しました' })
+      setShowPasswordForm(null)
+      setPasswordInput('')
+    } catch (e) {
+      setMessage({ type: 'error', text: e instanceof Error ? e.message : 'パスワードの設定に失敗しました' })
+    } finally {
+      setSettingPassword(null)
     }
   }
 
@@ -225,6 +253,7 @@ export default function UsersPage() {
                 <th className="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">現在のロール</th>
                 <th className="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">ロール変更</th>
                 <th className="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">最終更新</th>
+                <th className="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">パスワード</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -257,6 +286,39 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400">
                       {user.updated_at ? new Date(user.updated_at).toLocaleDateString('ja-JP') : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {showPasswordForm === user.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="password"
+                            value={passwordInput}
+                            onChange={e => setPasswordInput(e.target.value)}
+                            placeholder="8文字以上"
+                            className="w-32 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                          <button
+                            onClick={() => handleSetPassword(user.id)}
+                            disabled={settingPassword === user.id}
+                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            設定
+                          </button>
+                          <button
+                            onClick={() => { setShowPasswordForm(null); setPasswordInput('') }}
+                            className="text-xs text-gray-500 hover:text-gray-700"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setShowPasswordForm(user.id); setPasswordInput('') }}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          パスワードを設定
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
