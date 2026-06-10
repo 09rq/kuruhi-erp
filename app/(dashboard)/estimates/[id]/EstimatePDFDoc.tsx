@@ -50,9 +50,9 @@ interface Props {
 const FONT_BASE =
   typeof window === 'undefined'
     ? process.env.NEXT_PUBLIC_SITE_URL
-      ? `${process.env.NEXT_PUBLIC_SITE_URL}/fonts`  // Vercel: URLから取得
-      : `${process.cwd()}/public/fonts`               // ローカル: FSから直接読む
-    : '/fonts'                                         // クライアント側: 相対URL
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/fonts`  // Vercel: APIルート経由
+      : `${process.cwd()}/public/fonts`                   // ローカル: FSから直接読む
+    : '/api/fonts'                                         // クライアント側: APIルート
 
 Font.register({
   family: 'NotoSansJP',

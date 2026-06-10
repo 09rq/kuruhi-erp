@@ -23,9 +23,9 @@ interface Props {
 const FONT_BASE =
   typeof window === 'undefined'
     ? process.env.NEXT_PUBLIC_SITE_URL
-      ? `${process.env.NEXT_PUBLIC_SITE_URL}/fonts`
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/fonts`
       : `${process.cwd()}/public/fonts`
-    : '/fonts'
+    : '/api/fonts'
 
 Font.register({
   family: 'NotoSansJP',
