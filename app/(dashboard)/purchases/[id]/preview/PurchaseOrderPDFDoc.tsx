@@ -22,9 +22,7 @@ interface Props {
 // ブラウザ側: /fonts/ 相対URL
 const FONT_BASE =
   typeof window === 'undefined'
-    ? process.env.NEXT_PUBLIC_SITE_URL
-      ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/fonts`
-      : `${process.cwd()}/public/fonts`
+    ? `${process.cwd()}/public/fonts`
     : '/api/fonts'
 
 Font.register({

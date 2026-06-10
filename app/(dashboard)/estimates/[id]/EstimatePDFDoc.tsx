@@ -49,10 +49,8 @@ interface Props {
 // ブラウザ側（usePDF）は /fonts/ の相対パスを使う。
 const FONT_BASE =
   typeof window === 'undefined'
-    ? process.env.NEXT_PUBLIC_SITE_URL
-      ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/fonts`  // Vercel: APIルート経由
-      : `${process.cwd()}/public/fonts`                   // ローカル: FSから直接読む
-    : '/api/fonts'                                         // クライアント側: APIルート
+    ? `${process.cwd()}/public/fonts`  // サーバー側: FSから直接読む
+    : '/api/fonts'                      // クライアント側: APIルート
 
 Font.register({
   family: 'NotoSansJP',

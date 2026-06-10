@@ -14,6 +14,7 @@ export async function GET(
 
   try {
     const fontPath = join(process.cwd(), 'public', 'fonts', name)
+    console.log('[fonts] cwd:', process.cwd(), 'path:', fontPath)
     const fontData = readFileSync(fontPath)
     return new NextResponse(fontData, {
       headers: {
