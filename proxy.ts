@@ -31,15 +31,16 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // 未認証ユーザーをログインページへリダイレクト
-  if (!user && pathname !== '/login') {
+  // 認証不要のパスを除外
+  const publicPaths = ['/login', '/reset-password', '/update-password', '/api/fonts']
+  if (!user && !publicPaths.some(p => pathname.startsWith(p))) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   // 認証済みユーザーがログインページにアクセスした場合はダッシュボードへ
-  if (user && pathname === '/login') {
+  if (user && (pathname === '/login' || pathname === '/reset-password')) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
