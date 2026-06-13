@@ -20,6 +20,14 @@ const STATUS_COLORS: Record<GoalStatus, string> = {
   not_achieved: 'bg-red-100 text-red-700',
 }
 
+type EvalCategory = 'skill' | 'challenge' | 'teamwork'
+
+const EVAL_CATEGORY_LABELS: Record<EvalCategory, string> = {
+  skill: '業務スキル評価',
+  challenge: 'チャレンジ評価',
+  teamwork: 'チームワーク評価',
+}
+
 interface ActionGoal {
   id: string
   title: string
@@ -29,6 +37,7 @@ interface ActionGoal {
   current_value: number
   due_date: string | null
   status: GoalStatus
+  eval_category: EvalCategory | null
 }
 
 interface Props {
@@ -50,10 +59,11 @@ export default function ActionGoalForm({ memberId, goals, onUpdate }: Props) {
     current_value: '',
     due_date: '',
     status: 'not_started' as GoalStatus,
+    eval_category: '' as EvalCategory | '',
   })
 
   function resetForm() {
-    setForm({ title: '', action_plan: '', target_value: '', target_unit: '', current_value: '', due_date: '', status: 'not_started' })
+    setForm({ title: '', action_plan: '', target_value: '', target_unit: '', current_value: '', due_date: '', status: 'not_started', eval_category: '' })
     setEditingId(null)
     setShowForm(false)
   }
@@ -67,6 +77,7 @@ export default function ActionGoalForm({ memberId, goals, onUpdate }: Props) {
       current_value: goal.current_value?.toString() || '',
       due_date: goal.due_date || '',
       status: goal.status,
+      eval_category: goal.eval_category || '',
     })
     setEditingId(goal.id)
     setShowForm(true)
@@ -86,6 +97,7 @@ export default function ActionGoalForm({ memberId, goals, onUpdate }: Props) {
         current_value: form.current_value ? Number(form.current_value) : 0,
         due_date: form.due_date || null,
         status: form.status,
+        eval_category: form.eval_category || null,
       }
       if (editingId) {
         await supabase.from('kpi_action_goals').update(payload).eq('id', editingId)
@@ -187,6 +199,19 @@ export default function ActionGoalForm({ memberId, goals, onUpdate }: Props) {
               </div>
             </div>
             <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">評価カテゴリ（人事評価との連携）</label>
+              <select
+                value={form.eval_category}
+                onChange={e => setForm(p => ({ ...p, eval_category: e.target.value as EvalCategory | "" }))}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">設定しない</option>
+                {(Object.entries(EVAL_CATEGORY_LABELS) as [EvalCategory, string][]).map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="text-xs text-gray-600 font-medium mb-1 block">ステータス</label>
               <select
                 value={form.status}
@@ -224,6 +249,11 @@ export default function ActionGoalForm({ memberId, goals, onUpdate }: Props) {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-medium text-gray-900 text-sm">{goal.title}</p>
+                      {goal.eval_category && (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                          {EVAL_CATEGORY_LABELS[goal.eval_category]}
+                        </span>
+                      )}
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[goal.status]}`}>
                         {STATUS_LABELS[goal.status]}
                       </span>
