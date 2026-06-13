@@ -20,6 +20,20 @@ const ROLE_COLORS: Record<UserRole, string> = {
   accounting: 'bg-yellow-100 text-yellow-800',
 }
 
+interface KpiMember {
+  id: string
+  name: string
+  email: string
+  department: string
+  can_view_all: boolean
+}
+
+interface SupervisorAssignment {
+  id: string
+  supervisor_member_id: string
+  target_member_id: string
+}
+
 interface UserWithRole {
   id: string
   email: string
@@ -41,6 +55,10 @@ export default function UsersPage() {
   const [settingPassword, setSettingPassword] = useState<string | null>(null)
   const [passwordInput, setPasswordInput] = useState('')
   const [showPasswordForm, setShowPasswordForm] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'users' | 'supervisors'>('users')
+  const [kpiMembers, setKpiMembers] = useState<KpiMember[]>([])
+  const [supervisorAssignments, setSupervisorAssignments] = useState<SupervisorAssignment[]>([])
+  const [savingSupervisor, setSavingSupervisor] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -70,6 +88,19 @@ export default function UsersPage() {
       })
 
       setUsers(merged)
+
+      // KPIメンバーと上司設定を取得
+      const { data: kpiMembersData } = await supabase
+        .from('kpi_members')
+        .select('id, name, email, department, can_view_all')
+        .order('department')
+      setKpiMembers(kpiMembersData || [])
+
+      const { data: supervisorData } = await supabase
+        .from('kpi_supervisor_assignments')
+        .select('*')
+      setSupervisorAssignments(supervisorData || [])
+
     } catch {
       setMessage({ type: 'error', text: 'データの取得に失敗しました' })
     } finally {
@@ -94,6 +125,24 @@ export default function UsersPage() {
     } finally {
       setSaving(null)
     }
+  }
+
+  async function handleToggleSupervisor(supervisorId: string, targetId: string) {
+    setSavingSupervisor(true)
+    const existing = supervisorAssignments.find(
+      a => a.supervisor_member_id === supervisorId && a.target_member_id === targetId
+    )
+    if (existing) {
+      await supabase.from('kpi_supervisor_assignments').delete().eq('id', existing.id)
+      setSupervisorAssignments(prev => prev.filter(a => a.id !== existing.id))
+    } else {
+      const { data } = await supabase.from('kpi_supervisor_assignments').insert({
+        supervisor_member_id: supervisorId,
+        target_member_id: targetId,
+      }).select().single()
+      if (data) setSupervisorAssignments(prev => [...prev, data])
+    }
+    setSavingSupervisor(false)
   }
 
   async function handleSetPassword(userId: string) {
@@ -154,6 +203,11 @@ export default function UsersPage() {
     )
   }
 
+  const DEPT_LABELS: Record<string, string> = {
+    sales: '営業部', planning: '企画開発部', production: '生産管理部',
+    cutting: '生産管理部／裁断', quality: '品質管理部', management: '管理本部',
+  }
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
@@ -173,6 +227,22 @@ export default function UsersPage() {
         >
           <UserPlus className="h-4 w-4" />
           従業員を招待
+        </button>
+      </div>
+
+      {/* タブ */}
+      <div className="flex gap-2 mb-6 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('users')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'users' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >
+          ユーザー・ロール管理
+        </button>
+        <button
+          onClick={() => setActiveTab('supervisors')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'supervisors' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >
+          KPI上司設定
         </button>
       </div>
 
@@ -240,6 +310,57 @@ export default function UsersPage() {
         ))}
       </div>
 
+      {activeTab === 'supervisors' && (
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <p className="text-xs text-gray-500">上司として設定したいメンバーを選択し、担当するメンバーにチェックを入れてください。</p>
+          </div>
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {kpiMembers.map(supervisor => (
+                <div key={supervisor.id} className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm font-medium text-gray-900">{supervisor.name}</span>
+                    <span className="text-xs text-gray-500">（{DEPT_LABELS[supervisor.department] ?? supervisor.department}）</span>
+                    {supervisor.can_view_all && (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">管理職</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {kpiMembers
+                      .filter(m => m.id !== supervisor.id)
+                      .map(target => {
+                        const isAssigned = supervisorAssignments.some(
+                          a => a.supervisor_member_id === supervisor.id && a.target_member_id === target.id
+                        )
+                        return (
+                          <button
+                            key={target.id}
+                            onClick={() => handleToggleSupervisor(supervisor.id, target.id)}
+                            disabled={savingSupervisor}
+                            className={`text-xs px-3 py-1.5 rounded-full border transition-colors disabled:opacity-50 ${
+                              isAssigned
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+                            }`}
+                          >
+                            {isAssigned ? '✓ ' : ''}{target.name}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'users' && (
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-32">
@@ -327,6 +448,7 @@ export default function UsersPage() {
           </table>
         )}
       </div>
+      )}
     </div>
   )
 }
