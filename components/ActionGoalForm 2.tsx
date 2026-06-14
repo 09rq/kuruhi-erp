@@ -29,6 +29,7 @@ interface ActionGoal {
   current_value: number
   due_date: string | null
   status: GoalStatus
+  eval_category: 'skill' | 'challenge' | 'teamwork' | null
 }
 
 interface Props {
