@@ -221,6 +221,27 @@ export default function EvaluationPage() {
                     <Text style={styles.colManager}>上司評価</Text>
                     <Text style={styles.colComment}>判断理由・根拠</Text>
                   </View>
+                  {kpiCatGoals.map(kpiGoal => {
+                    const score = scores[kpiGoal.id]
+                    const isGood = (n: number) => n === 10 || n === 8
+                    return (
+                      <View key={`kpi-${kpiGoal.id}`} style={styles.tableRow}>
+                        <View style={styles.colGoal}>
+                          <Text style={{ fontSize: 7, color: '#7c3aed', marginBottom: 1 }}>KPI目標</Text>
+                          <Text>{kpiGoal.title}</Text>
+                          {kpiGoal.target_value && <Text style={{ fontSize: 7, color: '#666', marginTop: 1 }}>目標: {kpiGoal.target_value}{kpiGoal.target_unit}</Text>}
+                          {score?.actual_value && <Text style={{ fontSize: 7, color: '#2563eb', marginTop: 1 }}>実績: {score.actual_value}{kpiGoal.target_unit}</Text>}
+                        </View>
+                        <Text style={[styles.colSelf, score?.self_score ? (isGood(score.self_score) ? styles.scoreGood : styles.scoreBad) : {}]}>
+                          {score?.self_score ? `${SCORE_LABELS[score.self_score]}(${score.self_score})` : '　'}
+                        </Text>
+                        <Text style={[styles.colManager, score?.manager_score ? (isGood(score.manager_score) ? styles.scoreGood : styles.scoreBad) : {}]}>
+                          {score?.manager_score ? `${SCORE_LABELS[score.manager_score]}(${score.manager_score})` : '　'}
+                        </Text>
+                        <Text style={styles.colComment}>{score?.self_comment || score?.manager_comment || ''}</Text>
+                      </View>
+                    )
+                  })}
                   {catGoals.map(goal => {
                     const score = scores[goal.id]
                     const isGood = (n: number) => n === 10 || n === 8
