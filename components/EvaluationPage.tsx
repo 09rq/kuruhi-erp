@@ -210,7 +210,8 @@ export default function EvaluationPage() {
             </View>
             {categories.map(cat => {
               const catGoals = goals.filter(g => g.category === cat)
-              if (catGoals.length === 0) return null
+              const kpiCatGoals = kpiActionGoals.filter(kg => kg.eval_category === cat)
+            if (catGoals.length === 0 && kpiCatGoals.length === 0) return null
               return (
                 <View key={cat} style={styles.section}>
                   <Text style={styles.sectionTitle}>{CATEGORY_LABELS[cat]}</Text>
