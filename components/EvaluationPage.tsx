@@ -143,6 +143,8 @@ export default function EvaluationPage() {
     setSaving(true)
     setSaveMessage(null)
     try {
+      console.log('[save] scores keys:', Object.keys(scores))
+      console.log('[save] kpiGoalIds:', kpiActionGoals.map(g => g.id))
       for (const score of Object.values(scores)) {
         await supabase.from('eval_scores').upsert({
           ...score, fiscal_year: fiscalYear, period,
@@ -445,7 +447,9 @@ export default function EvaluationPage() {
             if (catGoals.length === 0 && kpiCatGoals2.length === 0) return null
             const isExpanded = expandedCategories[cat]
             const catSelf = catGoals.reduce((s, g) => s + (scores[g.id]?.self_score || 0), 0)
+              + kpiCatGoals2.reduce((s, g) => s + (scores[g.id]?.self_score || 0), 0)
             const catManager = catGoals.reduce((s, g) => s + (scores[g.id]?.manager_score || 0), 0)
+              + kpiCatGoals2.reduce((s, g) => s + (scores[g.id]?.manager_score || 0), 0)
             return (
               <div key={cat} className="bg-white border border-gray-200 rounded-2xl mb-4 overflow-hidden">
                 <button onClick={() => setExpandedCategories(p => ({ ...p, [cat]: !p[cat] }))} className="w-full flex items-center justify-between p-4 hover:bg-gray-50">
