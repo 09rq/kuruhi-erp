@@ -208,6 +208,28 @@ export default function EvaluationPage() {
               <View style={styles.infoCard}><Text style={styles.infoLabel}>役職</Text><Text style={styles.infoValue}>{POSITION_LABELS[targetMember.position]}</Text></View>
               <View style={styles.infoCard}><Text style={styles.infoLabel}>総合評価</Text><Text style={[styles.infoValue, { color: '#7c3aed' }]}>{totalLabel.label}（{totals.total}点）</Text></View>
             </View>
+            {/* 評価基準 */}
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+              <View style={{ flex: 1, padding: 6, backgroundColor: '#f8faff', borderWidth: 1, borderColor: '#e0e7ff', borderRadius: 3 }}>
+                <Text style={{ fontSize: 8, fontWeight: 'bold', marginBottom: 3 }}>【定性評価基準】</Text>
+                <Text style={{ fontSize: 7, color: '#333', marginBottom: 1 }}>S(10点)　とても素晴らしい（満点の100%）</Text>
+                <Text style={{ fontSize: 7, color: '#333', marginBottom: 1 }}>A(8点)　期待以上によくできている（満点の80%）</Text>
+                <Text style={{ fontSize: 7, color: '#333', marginBottom: 1 }}>B(6点)　しっかりできている（満点の70%）</Text>
+                <Text style={{ fontSize: 7, color: '#333', marginBottom: 1 }}>C(4点)　もう一歩伸びてほしい（満点の40%）</Text>
+                <Text style={{ fontSize: 7, color: '#333' }}>D(2点)　これからに期待したい（満点の20%）</Text>
+              </View>
+              <View style={{ flex: 1, padding: 6, backgroundColor: '#f8faff', borderWidth: 1, borderColor: '#e0e7ff', borderRadius: 3 }}>
+                <Text style={{ fontSize: 8, fontWeight: 'bold', marginBottom: 3 }}>【定量評価基準】</Text>
+                <Text style={{ fontSize: 7, color: '#333', marginBottom: 1 }}>S(10点)　極めて優れている（達成率110%以上）</Text>
+                <Text style={{ fontSize: 7, color: '#333', marginBottom: 1 }}>A(8点)　優れている（達成率100〜109%）</Text>
+                <Text style={{ fontSize: 7, color: '#333', marginBottom: 1 }}>B(6点)　標準（達成率90〜99%）</Text>
+                <Text style={{ fontSize: 7, color: '#333', marginBottom: 1 }}>C(4点)　やや不十分（達成率80〜89%）</Text>
+                <Text style={{ fontSize: 7, color: '#333' }}>D(2点)　かなり不十分（達成率80%未満）</Text>
+              </View>
+            </View>
+            <View style={{ padding: 4, backgroundColor: '#f3f4f6', borderRadius: 3, marginBottom: 8 }}>
+              <Text style={{ fontSize: 7, color: '#555' }}>【総合評価基準】S：95点以上　A：80〜94点　B：70〜79点　C：60〜69点　D：60点未満　（満点110点）</Text>
+            </View>
             {categories.map(cat => {
               const catGoals = goals.filter(g => g.category === cat)
               const kpiCatGoals = kpiActionGoals.filter(kg => kg.eval_category === cat)
@@ -364,6 +386,35 @@ export default function EvaluationPage() {
           <select value={period} onChange={e => setPeriod(e.target.value as EvalPeriod)} className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
             {Object.entries(PERIOD_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
+        </div>
+      </div>
+
+      {/* 評価基準 */}
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 text-xs">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="font-bold text-gray-700 mb-2">【定性評価基準】</p>
+            <div className="space-y-1 text-gray-600">
+              <p><span className="font-bold text-purple-700">S(10点)</span>　とても素晴らしい（満点の100%）</p>
+              <p><span className="font-bold text-blue-700">A(8点)</span>　期待以上によくできている（満点の80%）</p>
+              <p><span className="font-bold text-green-700">B(6点)</span>　しっかりできている（満点の70%）</p>
+              <p><span className="font-bold text-yellow-700">C(4点)</span>　もう一歩伸びてほしい（満点の40%）</p>
+              <p><span className="font-bold text-red-700">D(2点)</span>　これからに期待したい（満点の20%）</p>
+            </div>
+          </div>
+          <div>
+            <p className="font-bold text-gray-700 mb-2">【定量評価基準】</p>
+            <div className="space-y-1 text-gray-600">
+              <p><span className="font-bold text-purple-700">S(10点)</span>　極めて優れている（達成率110%以上）</p>
+              <p><span className="font-bold text-blue-700">A(8点)</span>　優れている（達成率100〜109%）</p>
+              <p><span className="font-bold text-green-700">B(6点)</span>　標準（達成率90〜99%）</p>
+              <p><span className="font-bold text-yellow-700">C(4点)</span>　やや不十分（達成率80〜89%）</p>
+              <p><span className="font-bold text-red-700">D(2点)</span>　かなり不十分（達成率80%未満）</p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-2 pt-2 border-t border-gray-200 text-gray-500">
+          <p>【総合評価基準】S：95点以上　A：80〜94点　B：70〜79点　C：60〜69点　D：60点未満　（満点110点）</p>
         </div>
       </div>
 
