@@ -361,7 +361,8 @@ export default function EvaluationPage() {
 
           {(['company', 'skill', 'challenge', 'teamwork'] as EvalCategory[]).map(cat => {
             const catGoals = goals.filter(g => g.category === cat)
-            if (catGoals.length === 0) return null
+            const kpiCatGoals2 = kpiActionGoals.filter(kg => kg.eval_category === cat)
+            if (catGoals.length === 0 && kpiCatGoals2.length === 0) return null
             const isExpanded = expandedCategories[cat]
             const catSelf = catGoals.reduce((s, g) => s + (scores[g.id]?.self_score || 0), 0)
             const catManager = catGoals.reduce((s, g) => s + (scores[g.id]?.manager_score || 0), 0)
