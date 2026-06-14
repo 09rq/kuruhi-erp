@@ -55,6 +55,15 @@ interface EvalScore {
   actual_value: number | null
 }
 
+interface KpiActionGoal {
+  id: string
+  title: string
+  eval_category: 'skill' | 'challenge' | 'teamwork'
+  target_value: number | null
+  target_unit: string | null
+  is_quantitative: boolean
+}
+
 export default function EvaluationPage() {
   const supabase = createClient()
   const [myMember, setMyMember] = useState<KpiMember | null>(null)
@@ -71,6 +80,7 @@ export default function EvaluationPage() {
     company: true, skill: true, challenge: true, teamwork: true,
   })
   const [canViewAll, setCanViewAll] = useState(false)
+  const [kpiActionGoals, setKpiActionGoals] = useState<KpiActionGoal[]>([])
   const [fiscalYear, setFiscalYear] = useState(63)
   const [availableFiscalYears, setAvailableFiscalYears] = useState<number[]>([63, 64])
 
@@ -97,6 +107,18 @@ export default function EvaluationPage() {
         .from('eval_scores').select('*')
         .eq('member_id', target.id).eq('fiscal_year', fiscalYear).eq('period', period)
       setGoals(goalsData || [])
+
+      // KPIアクション目標（eval_categoryが設定されているもの）を取得
+      const { data: kpiGoalsData } = await supabase
+        .from('kpi_action_goals')
+        .select('id, title, eval_category, target_value, target_unit')
+        .eq('member_id', target.id)
+        .eq('fiscal_year', fiscalYear === 63 ? 2026 : fiscalYear)
+        .not('eval_category', 'is', null)
+      setKpiActionGoals((kpiGoalsData || []).map((g: {id: string; title: string; eval_category: string; target_value: number | null; target_unit: string | null}) => ({
+        ...g,
+        is_quantitative: g.target_value !== null,
+      })) as KpiActionGoal[])
       const scoresMap: Record<string, EvalScore> = {}
       scoresData?.forEach((s: EvalScore) => { scoresMap[s.eval_goal_id] = s })
       setScores(scoresMap)
@@ -363,6 +385,53 @@ export default function EvaluationPage() {
                       <div className="col-span-2 text-center">上司評価</div>
                       <div className="col-span-4">コメント・判断根拠</div>
                     </div>
+                    {/* KPIアクション目標（eval_categoryが一致するもの）を表示 */}
+                    {kpiActionGoals.filter(kg => kg.eval_category === cat).map(kpiGoal => {
+                      const score = scores[kpiGoal.id] || { eval_goal_id: kpiGoal.id, member_id: targetMember.id, self_score: null, self_comment: '', manager_score: null, manager_comment: '', actual_value: null }
+                      return (
+                        <div key={`kpi-${kpiGoal.id}`} className="grid grid-cols-12 gap-0 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 bg-purple-50/30">
+                          <div className="col-span-4 pr-3">
+                            <div className="flex items-center gap-1 mb-1">
+                              <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">KPI目標</span>
+                            </div>
+                            <p className="text-sm text-gray-800">{kpiGoal.title}</p>
+                            {kpiGoal.target_value && <p className="text-xs text-gray-400 mt-0.5">目標: {kpiGoal.target_value}{kpiGoal.target_unit}</p>}
+                            {kpiGoal.is_quantitative && (
+                              <input type="number" value={score.actual_value || ''} onChange={e => handleScoreChange(kpiGoal.id, 'actual_value', e.target.value ? Number(e.target.value) : null)} placeholder="実績値を入力" className="mt-1 w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                            )}
+                          </div>
+                          <div className="col-span-2 flex flex-col items-center gap-1">
+                            {isOwnSheet && (
+                              <select value={score.self_score || ''} onChange={e => handleScoreChange(kpiGoal.id, 'self_score', e.target.value ? Number(e.target.value) : null)} className="w-full text-xs border border-gray-200 rounded px-1 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option value="">選択</option>
+                                <option value="10">S（10点）</option>
+                                <option value="8">A（8点）</option>
+                                <option value="6">B（6点）</option>
+                                <option value="4">C（4点）</option>
+                                <option value="2">D（2点）</option>
+                              </select>
+                            )}
+                            {score.self_score && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${SCORE_COLORS[score.self_score]}`}>{SCORE_LABELS[score.self_score]}({score.self_score})</span>}
+                          </div>
+                          <div className="col-span-2 flex flex-col items-center gap-1">
+                            {canViewAll && (
+                              <select value={score.manager_score || ''} onChange={e => handleScoreChange(kpiGoal.id, 'manager_score', e.target.value ? Number(e.target.value) : null)} className="w-full text-xs border border-gray-200 rounded px-1 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option value="">選択</option>
+                                <option value="10">S（10点）</option>
+                                <option value="8">A（8点）</option>
+                                <option value="6">B（6点）</option>
+                                <option value="4">C（4点）</option>
+                                <option value="2">D（2点）</option>
+                              </select>
+                            )}
+                            {score.manager_score && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${SCORE_COLORS[score.manager_score]}`}>{SCORE_LABELS[score.manager_score]}({score.manager_score})</span>}
+                          </div>
+                          <div className="col-span-4 pl-3">
+                            <textarea value={isOwnSheet ? (score.self_comment || '') : (score.manager_comment || '')} onChange={e => handleScoreChange(kpiGoal.id, isOwnSheet ? 'self_comment' : 'manager_comment', e.target.value)} placeholder="判断理由・根拠を入力" rows={2} className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none" />
+                          </div>
+                        </div>
+                      )
+                    })}
                     {catGoals.map(goal => {
                       const score = scores[goal.id] || { eval_goal_id: goal.id, member_id: targetMember.id, self_score: null, self_comment: '', manager_score: null, manager_comment: '', actual_value: null }
                       return (
