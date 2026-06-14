@@ -143,8 +143,6 @@ export default function EvaluationPage() {
     setSaving(true)
     setSaveMessage(null)
     try {
-      console.log('[save] scores keys:', Object.keys(scores))
-      console.log('[save] kpiGoalIds:', kpiActionGoals.map(g => g.id))
       for (const score of Object.values(scores)) {
         await supabase.from('eval_scores').upsert({
           ...score, fiscal_year: fiscalYear, period,
