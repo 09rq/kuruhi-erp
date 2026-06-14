@@ -247,7 +247,7 @@ export default function EvaluationPage() {
                     const score = scores[kpiGoal.id]
                     const isGood = (n: number) => n === 10 || n === 8
                     return (
-                      <View key={`kpi-${kpiGoal.id}`} style={styles.tableRow}>
+                      <View key={`kpi-${kpiGoal.id}`} style={styles.tableRow} wrap={false}>
                         <View style={styles.colGoal}>
                           <Text style={{ fontSize: 7, color: '#7c3aed', marginBottom: 1 }}>KPI目標</Text>
                           <Text>{kpiGoal.title}</Text>
@@ -268,7 +268,7 @@ export default function EvaluationPage() {
                     const score = scores[goal.id]
                     const isGood = (n: number) => n === 10 || n === 8
                     return (
-                      <View key={goal.id} style={styles.tableRow}>
+                      <View key={goal.id} style={styles.tableRow} wrap={false}>
                         <View style={styles.colGoal}>
                           <Text>{goal.goal_text}</Text>
                           {goal.target_value && <Text style={{ fontSize: 7, color: '#666', marginTop: 1 }}>目標: {goal.target_value}{goal.target_unit}</Text>}
