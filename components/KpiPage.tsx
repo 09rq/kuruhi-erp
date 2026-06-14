@@ -36,6 +36,7 @@ interface ActionGoal {
   target_value: number | null; target_unit: string | null
   current_value: number; due_date: string | null
   status: 'not_started' | 'in_progress' | 'achieved' | 'not_achieved'
+  eval_category: 'skill' | 'challenge' | 'teamwork' | null
 }
 interface MonthlyCost {
   year_month: string; revenue: number; material_cost: number
