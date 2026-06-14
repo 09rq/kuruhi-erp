@@ -302,7 +302,15 @@ export default function EvaluationPage() {
       if (score?.self_score) selfTotal += score.self_score
       if (score?.manager_score) managerTotal += score.manager_score
     })
-    return { self: selfTotal, manager: managerTotal, total: Math.round((selfTotal + managerTotal) / 2) }
+    kpiActionGoals.forEach(kpiGoal => {
+      const score = scores[kpiGoal.id]
+      if (score?.self_score) selfTotal += score.self_score
+      if (score?.manager_score) managerTotal += score.manager_score
+    })
+    const total = selfTotal > 0 && managerTotal > 0
+      ? Math.round((selfTotal + managerTotal) / 2)
+      : selfTotal > 0 ? selfTotal : managerTotal
+    return { self: selfTotal, manager: managerTotal, total }
   }
 
   const totals = calcTotalScore()
