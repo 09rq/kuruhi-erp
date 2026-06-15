@@ -528,7 +528,7 @@ export default function EvaluationPage() {
                             )}
                           </div>
                           <div className="col-span-2 flex flex-col items-center gap-1">
-                            {isOwnSheet && (
+                            {(isOwnSheet || canViewAll) && (
                               <select value={score.self_score || ''} onChange={e => handleScoreChange(goal.id, 'self_score', e.target.value ? Number(e.target.value) : null)} className="w-full text-xs border border-gray-200 rounded px-1 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                                 <option value="">選択</option>
                                 <option value="10">S（10点）</option>
