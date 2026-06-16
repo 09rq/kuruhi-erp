@@ -20,6 +20,8 @@ const PERIOD_LABELS: Record<EvalPeriod, string> = {
   full_year: '通期',
 }
 
+type EvalType = 'qualitative' | 'quantitative'
+
 interface EvalGoal {
   id: string
   fiscal_year: number
@@ -31,6 +33,8 @@ interface EvalGoal {
   target_value: number | null
   target_unit: string | null
   member_id: string | null
+  eval_type: EvalType
+  description: string | null
 }
 
 interface KpiMember {
@@ -99,6 +103,8 @@ export default function EvalGoalsPage() {
       target_value: null,
       target_unit: null,
       member_id: null,
+      eval_type: 'qualitative' as EvalType,
+      description: null,
     }
     setGoals(prev => [...prev, newGoal])
   }
@@ -133,6 +139,8 @@ export default function EvalGoalsPage() {
             target_value: goal.target_value,
             target_unit: goal.target_unit,
             member_id: goal.member_id,
+            eval_type: goal.eval_type,
+            description: goal.description,
           })
         } else {
           await supabase.from('eval_goals').update({
@@ -142,6 +150,8 @@ export default function EvalGoalsPage() {
             target_unit: goal.target_unit,
             member_id: goal.member_id,
             sort_order: goal.sort_order,
+            eval_type: goal.eval_type,
+            description: goal.description,
           }).eq('id', goal.id)
         }
       }
@@ -224,6 +234,27 @@ export default function EvalGoalsPage() {
                         onChange={e => updateRow(goal.id, 'goal_text', e.target.value)}
                         className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="評価項目を入力してください"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">評価基準</label>
+                      <select
+                        value={goal.eval_type}
+                        onChange={e => updateRow(goal.id, 'eval_type', e.target.value)}
+                        className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="qualitative">定性評価（S/A/B/C/D）</option>
+                        <option value="quantitative">定量評価（達成率）</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">目標の説明（備考）</label>
+                      <textarea
+                        value={goal.description ?? ''}
+                        onChange={e => updateRow(goal.id, 'description', e.target.value || null)}
+                        className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="目標の詳細や達成基準を入力してください"
+                        rows={2}
                       />
                     </div>
                     <div className="flex items-center gap-4 flex-wrap">
