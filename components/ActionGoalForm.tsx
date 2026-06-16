@@ -86,7 +86,6 @@ export default function ActionGoalForm({ memberId, goals, onUpdate, fiscalYear =
 
   async function handleSave() {
     if (!form.title) return
-    alert('fiscal_year: ' + fiscalYear)
     setSaving(true)
     try {
       const payload = {
