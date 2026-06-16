@@ -304,6 +304,7 @@ export default function KpiPage() {
                   memberId={myMember.id}
                   goals={memberActionGoals(myMember.id)}
                   onUpdate={fetchData}
+                  fiscalYear={fiscalYear === 63 ? 2026 : fiscalYear}
                 />
               </div>
             </>
@@ -343,7 +344,7 @@ export default function KpiPage() {
                 </button>
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-gray-100 pt-3">
-                    <ActionGoalForm memberId={member.id} goals={aGoals} onUpdate={fetchData} />
+                    <ActionGoalForm memberId={member.id} goals={aGoals} onUpdate={fetchData} fiscalYear={fiscalYear === 63 ? 2026 : fiscalYear} />
                   </div>
                 )}
               </div>

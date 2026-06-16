@@ -44,9 +44,10 @@ interface Props {
   memberId: string
   goals: ActionGoal[]
   onUpdate: () => void
+  fiscalYear?: number
 }
 
-export default function ActionGoalForm({ memberId, goals, onUpdate }: Props) {
+export default function ActionGoalForm({ memberId, goals, onUpdate, fiscalYear = 2026 }: Props) {
   const supabase = createClient()
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -89,7 +90,7 @@ export default function ActionGoalForm({ memberId, goals, onUpdate }: Props) {
     try {
       const payload = {
         member_id: memberId,
-        fiscal_year: 2026,
+        fiscal_year: fiscalYear,
         title: form.title,
         action_plan: form.action_plan || null,
         target_value: form.target_value ? Number(form.target_value) : null,
