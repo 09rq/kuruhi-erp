@@ -180,7 +180,7 @@ export default function EvaluationPage() {
         colGoal: { flex: 4, padding: 4 },
         colSelf: { flex: 1, padding: 4, textAlign: 'center', borderLeftWidth: 1, borderLeftColor: '#e5e7eb' },
         colManager: { flex: 1, padding: 4, textAlign: 'center', borderLeftWidth: 1, borderLeftColor: '#e5e7eb' },
-        colComment: { flex: 3, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' },
+        colComment: { flex: 3, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb', flexWrap: 'wrap' },
         scoreGood: { color: '#16a34a', fontWeight: 'bold' },
         scoreBad: { color: '#dc2626', fontWeight: 'bold' },
         totalBox: { flexDirection: 'row', gap: 6, marginTop: 8, marginBottom: 10 },
