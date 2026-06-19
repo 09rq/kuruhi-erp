@@ -26,9 +26,11 @@ interface KpiMember {
   department: Department; position: Position; can_view_all: boolean
 }
 interface KpiGoal {
-  id: string; member_id: string; fiscal_year: number
-  goal_title: string; goal_description: string
+  id: string; member_id: string | null; fiscal_year: number
+  goal_title: string; goal_description: string | null
   target_value: number | null; target_unit: string | null
+  department: string | null; eval_criteria: string | null
+  category: string | null; period: string | null
 }
 interface ActionGoal {
   member_id: string;
