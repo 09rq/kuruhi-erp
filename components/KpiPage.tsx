@@ -94,7 +94,7 @@ export default function KpiPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { data: members } = await supabase.from('kpi_members').select('*').order('department')
-      const { data: goalsData } = await supabase.from('kpi_goals').select('*').eq('fiscal_year', fiscalYear === 63 ? 2026 : fiscalYear)
+      const { data: goalsData } = await supabase.from('kpi_goals').select('*').eq('fiscal_year', fiscalYear === 63 ? 2026 : fiscalYear).order('created_at')
       const { data: actionGoalsData } = await supabase.from('kpi_action_goals').select('*').eq('fiscal_year', fiscalYear === 63 ? 2026 : fiscalYear)
       const { data: fyTargets } = await supabase.from('fiscal_year_targets').select('*').eq('fiscal_year', fiscalYear).single()
       const { data: allFY } = await supabase.from('fiscal_year_targets').select('fiscal_year').order('fiscal_year', { ascending: false })
@@ -166,7 +166,11 @@ export default function KpiPage() {
     return Math.min(100, Math.max(0, 50 + (targetTotal - actual) * 5))
   }
 
-  const memberGoals = (id: string) => goals.filter(g => g.member_id === id)
+  const memberGoals = (id: string) => {
+    const member = allMembers.find(m => m.id === id)
+    if (!member) return []
+    return goals.filter(g => g.department === member.department || g.department === null)
+  }
   const memberActionGoals = (id: string) => actionGoals.filter(g => g.member_id === id)
   const canViewAll = myMember?.can_view_all || false
   const bonusProgress = calcBonusProgress()
@@ -287,15 +291,25 @@ export default function KpiPage() {
               </div>
 
               <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-                <h3 className="text-sm font-bold text-gray-700 mb-3">部門KPI目標</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-700">部門KPI目標</h3>
+                  {canViewAll && (
+                    <a href="/kpi/goals" className="text-xs text-blue-600 hover:underline">⚙️ 部門目標を管理する</a>
+                  )}
+                </div>
                 <div className="grid gap-3">
-                  {memberGoals(myMember.id).map(goal => (
-                    <div key={goal.id} className="bg-gray-50 rounded-xl p-3">
-                      <p className="font-medium text-gray-900 text-sm">{goal.goal_title}</p>
-                      <p className="text-xs text-gray-500 mt-1">{goal.goal_description}</p>
-                      {goal.target_value && <p className="text-xs text-blue-700 font-bold mt-1">目標: {goal.target_value.toLocaleString()}{goal.target_unit}</p>}
-                    </div>
-                  ))}
+                  {memberGoals(myMember.id).length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">部門目標が設定されていません</p>
+                  ) : (
+                    memberGoals(myMember.id).map(goal => (
+                      <div key={goal.id} className="bg-gray-50 rounded-xl p-3">
+                        <p className="font-medium text-gray-900 text-sm">{goal.goal_title}</p>
+                        {goal.goal_description && <p className="text-xs text-gray-500 mt-1">{goal.goal_description}</p>}
+                        {goal.eval_criteria && <p className="text-xs text-orange-600 mt-1">評価基準: {goal.eval_criteria}</p>}
+                        {goal.target_value && <p className="text-xs text-blue-700 font-bold mt-1">目標: {goal.target_value.toLocaleString()}{goal.target_unit}</p>}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
