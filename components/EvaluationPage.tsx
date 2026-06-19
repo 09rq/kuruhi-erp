@@ -74,6 +74,8 @@ export default function EvaluationPage() {
   const [scores, setScores] = useState<Record<string, EvalScore>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [selfOverallComment, setSelfOverallComment] = useState('')
+  const [managerOverallComment, setManagerOverallComment] = useState('')
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
@@ -107,6 +109,17 @@ export default function EvaluationPage() {
         .from('eval_scores').select('*')
         .eq('member_id', target.id).eq('fiscal_year', fiscalYear).eq('period', period)
       setGoals(goalsData || [])
+
+      // 総評コメントを取得
+      const { data: overallData } = await supabase
+        .from('eval_overall_comments')
+        .select('*')
+        .eq('member_id', target.id)
+        .eq('fiscal_year', fiscalYear)
+        .eq('period', period)
+        .single()
+      setSelfOverallComment(overallData?.self_comment || '')
+      setManagerOverallComment(overallData?.manager_comment || '')
 
       // KPIアクション目標（eval_categoryが設定されているもの）を取得
       const { data: kpiGoalsData } = await supabase
@@ -148,6 +161,15 @@ export default function EvaluationPage() {
           ...score, fiscal_year: fiscalYear, period,
         }, { onConflict: 'eval_goal_id,member_id,fiscal_year,period' })
       }
+      // 総評コメントを保存
+      await supabase.from('eval_overall_comments').upsert({
+        member_id: targetMember.id,
+        fiscal_year: fiscalYear,
+        period,
+        self_comment: selfOverallComment,
+        manager_comment: managerOverallComment,
+      }, { onConflict: 'member_id,fiscal_year,period' })
+
       setSaveMessage('保存しました')
       setTimeout(() => setSaveMessage(null), 3000)
     } catch (e) {
@@ -164,10 +186,7 @@ export default function EvaluationPage() {
       Font.register({ family: 'NotoSans', src: '/NotoSans.otf' })
       const totals = calcTotalScore()
       const totalLabel = getTotalLabel(totals.total)
-      // 総評コメント（eval_scoresの最初のレコードから取得）
-      const firstScore = Object.values(scores)[0]
-      const selfOverallComment = (firstScore as {self_overall_comment?: string})?.self_overall_comment || ''
-      const managerOverallComment = (firstScore as {manager_overall_comment?: string})?.manager_overall_comment || ''
+      // 総評コメントはstateから取得
       const styles = StyleSheet.create({
         page: { padding: 30, fontSize: 9, fontFamily: 'NotoSans' },
         title: { fontSize: 14, fontWeight: 'bold', marginBottom: 2, textAlign: 'center' },
@@ -581,6 +600,35 @@ export default function EvaluationPage() {
               </div>
             )
           })}
+
+          {/* 総評コメント入力欄 */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-4">
+            <h3 className="text-sm font-bold text-gray-900 mb-4">総評コメント</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">本人コメント</label>
+                <textarea
+                  value={selfOverallComment}
+                  onChange={e => setSelfOverallComment(e.target.value)}
+                  disabled={!isOwnSheet && !canViewAll}
+                  rows={4}
+                  placeholder="自己評価の総評を入力してください"
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">上司コメント</label>
+                <textarea
+                  value={managerOverallComment}
+                  onChange={e => setManagerOverallComment(e.target.value)}
+                  disabled={!canViewAll}
+                  rows={4}
+                  placeholder="上司からの総評を入力してください"
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
+                />
+              </div>
+            </div>
+          </div>
 
           <EvalMemo memberId={targetMember.id} period={period} canViewAll={canViewAll} />
         </>
