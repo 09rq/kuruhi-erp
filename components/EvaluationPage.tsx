@@ -164,6 +164,10 @@ export default function EvaluationPage() {
       Font.register({ family: 'NotoSans', src: '/NotoSans.otf' })
       const totals = calcTotalScore()
       const totalLabel = getTotalLabel(totals.total)
+      // 総評コメント（eval_scoresの最初のレコードから取得）
+      const firstScore = Object.values(scores)[0]
+      const selfOverallComment = (firstScore as {self_overall_comment?: string})?.self_overall_comment || ''
+      const managerOverallComment = (firstScore as {manager_overall_comment?: string})?.manager_overall_comment || ''
       const styles = StyleSheet.create({
         page: { padding: 30, fontSize: 9, fontFamily: 'NotoSans' },
         title: { fontSize: 14, fontWeight: 'bold', marginBottom: 2, textAlign: 'center' },
@@ -197,7 +201,7 @@ export default function EvaluationPage() {
       const categories: EvalCategory[] = ['company', 'skill', 'challenge', 'teamwork']
       const MyDoc = () => (
         <Document>
-          <Page size="A4" style={styles.page}>
+          <Page size="A3" orientation="landscape" style={styles.page}>
             <Text style={styles.title}>人事評価シート　第{fiscalYear}期（{PERIOD_LABELS[period]}）</Text>
             <Text style={styles.subtitle}>株式会社クルヒ　作成日: {new Date().toLocaleDateString('ja-JP')}</Text>
             {period === 'first_half' && <Text style={styles.badge}>※冬季賞与評価対象</Text>}
@@ -292,6 +296,19 @@ export default function EvaluationPage() {
               <View style={styles.totalCard}><Text style={styles.totalLabel}>上司評価合計</Text><Text style={[styles.totalValue, { color: '#1e3a5f' }]}>{totals.manager}点</Text></View>
               <View style={styles.totalCard}><Text style={styles.totalLabel}>総合得点</Text><Text style={[styles.totalValue, { color: '#7c3aed' }]}>{totals.total}点</Text></View>
               <View style={styles.totalCard}><Text style={styles.totalLabel}>総合評価</Text><Text style={[styles.totalValue, { color: '#7c3aed' }]}>{totalLabel.label}</Text></View>
+            </View>
+            <View style={{ marginBottom: 8 }}>
+              <Text style={{ fontSize: 9, fontWeight: 'bold', padding: 4, backgroundColor: '#1e3a5f', color: 'white', marginBottom: 0 }}>総評コメント</Text>
+              <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: '#d1d5db', borderTopWidth: 0 }}>
+                <View style={{ flex: 1, padding: 6, borderRightWidth: 1, borderRightColor: '#d1d5db' }}>
+                  <Text style={{ fontSize: 8, color: '#666', marginBottom: 3 }}>本人コメント</Text>
+                  <Text style={{ fontSize: 8, minHeight: 40 }}>{selfOverallComment}</Text>
+                </View>
+                <View style={{ flex: 1, padding: 6 }}>
+                  <Text style={{ fontSize: 8, color: '#666', marginBottom: 3 }}>上司コメント</Text>
+                  <Text style={{ fontSize: 8, minHeight: 40 }}>{managerOverallComment}</Text>
+                </View>
+              </View>
             </View>
             <View style={styles.handwriteBox}><Text style={styles.handwriteLabel}>面談メモ・コメント（手書き記入欄）</Text></View>
             <View style={styles.signRow}>
