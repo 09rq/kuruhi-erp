@@ -41,6 +41,8 @@ interface KpiGoal {
   target_value: number | null
   target_unit: string | null
   eval_criteria: string | null
+  key_points: string | null
+  examples: string | null
 }
 
 export default function KpiGoalsPage() {
@@ -105,6 +107,8 @@ export default function KpiGoalsPage() {
       target_value: null,
       target_unit: null,
       eval_criteria: null,
+      key_points: null,
+      examples: null,
     }
     setGoals(prev => [...prev, newGoal])
   }
@@ -139,6 +143,8 @@ export default function KpiGoalsPage() {
             target_value: goal.target_value,
             target_unit: goal.target_unit,
             eval_criteria: goal.eval_criteria,
+            key_points: goal.key_points,
+            examples: goal.examples,
           })
         } else {
           await supabase.from('kpi_goals').update({
@@ -147,6 +153,8 @@ export default function KpiGoalsPage() {
             target_value: goal.target_value,
             target_unit: goal.target_unit,
             eval_criteria: goal.eval_criteria,
+            key_points: goal.key_points,
+            examples: goal.examples,
           }).eq('id', goal.id)
         }
       }

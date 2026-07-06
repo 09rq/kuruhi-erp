@@ -35,6 +35,8 @@ interface EvalGoal {
   member_id: string | null
   eval_type: EvalType
   description: string | null
+  key_points: string | null
+  examples: string | null
 }
 
 interface KpiMember {
@@ -105,6 +107,8 @@ export default function EvalGoalsPage() {
       member_id: null,
       eval_type: 'qualitative' as EvalType,
       description: null,
+      key_points: null,
+      examples: null,
     }
     setGoals(prev => [...prev, newGoal])
   }
@@ -141,6 +145,10 @@ export default function EvalGoalsPage() {
             member_id: goal.member_id,
             eval_type: goal.eval_type,
             description: goal.description,
+            key_points: goal.key_points,
+            examples: goal.examples,
+            key_points: goal.key_points,
+            examples: goal.examples,
           })
         } else {
           await supabase.from('eval_goals').update({
@@ -152,6 +160,10 @@ export default function EvalGoalsPage() {
             sort_order: goal.sort_order,
             eval_type: goal.eval_type,
             description: goal.description,
+            key_points: goal.key_points,
+            examples: goal.examples,
+            key_points: goal.key_points,
+            examples: goal.examples,
           }).eq('id', goal.id)
         }
       }

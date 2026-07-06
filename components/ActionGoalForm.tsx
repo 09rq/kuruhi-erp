@@ -38,6 +38,8 @@ interface ActionGoal {
   due_date: string | null
   status: GoalStatus
   eval_category: EvalCategory | null
+  key_points: string | null
+  examples: string | null
 }
 
 interface Props {
@@ -61,10 +63,12 @@ export default function ActionGoalForm({ memberId, goals, onUpdate, fiscalYear =
     due_date: '',
     status: 'not_started' as GoalStatus,
     eval_category: '' as EvalCategory | '',
+    key_points: '',
+    examples: '',
   })
 
   function resetForm() {
-    setForm({ title: '', action_plan: '', target_value: '', target_unit: '', current_value: '', due_date: '', status: 'not_started', eval_category: '' })
+    setForm({ title: '', action_plan: '', target_value: '', target_unit: '', current_value: '', due_date: '', status: 'not_started', eval_category: '', key_points: '', examples: '' })
     setEditingId(null)
     setShowForm(false)
   }
@@ -79,6 +83,8 @@ export default function ActionGoalForm({ memberId, goals, onUpdate, fiscalYear =
       due_date: goal.due_date || '',
       status: goal.status,
       eval_category: goal.eval_category || '',
+      key_points: goal.key_points || '',
+      examples: goal.examples || '',
     })
     setEditingId(goal.id)
     setShowForm(true)
@@ -99,6 +105,8 @@ export default function ActionGoalForm({ memberId, goals, onUpdate, fiscalYear =
         due_date: form.due_date || null,
         status: form.status,
         eval_category: form.eval_category || null,
+        key_points: form.key_points || null,
+        examples: form.examples || null,
       }
       if (editingId) {
         await supabase.from('kpi_action_goals').update(payload).eq('id', editingId)
@@ -198,6 +206,26 @@ export default function ActionGoalForm({ memberId, goals, onUpdate, fiscalYear =
                   className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">運用上のポイント</label>
+              <textarea
+                value={form.key_points}
+                onChange={e => setForm(p => ({ ...p, key_points: e.target.value }))}
+                placeholder="例：週次で進捗を確認する"
+                rows={2}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">具体例</label>
+              <textarea
+                value={form.examples}
+                onChange={e => setForm(p => ({ ...p, examples: e.target.value }))}
+                placeholder="例：月2件以上の新規顧客へのアプローチ"
+                rows={2}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
             <div>
               <label className="text-xs text-gray-600 font-medium mb-1 block">評価カテゴリ（人事評価との連携）</label>
