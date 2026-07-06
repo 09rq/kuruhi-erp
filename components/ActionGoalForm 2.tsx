@@ -30,6 +30,8 @@ interface ActionGoal {
   due_date: string | null
   status: GoalStatus
   eval_category: 'skill' | 'challenge' | 'teamwork' | null
+  key_points: string | null
+  examples: string | null
 }
 
 interface Props {
