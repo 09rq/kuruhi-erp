@@ -278,21 +278,24 @@ export default function EvaluationPage() {
               <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { backgroundColor: '#1e40af' }]}>自部門の目標（参照）</Text>
                 <View style={styles.tableHeader}>
-                  <Text style={{ flex: 5, padding: 4 }}>目標項目</Text>
-                  <Text style={{ flex: 4, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>目標内容</Text>
+                  <Text style={{ flex: 2, padding: 4 }}>カテゴリ</Text>
+                  <Text style={{ flex: 4, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>目標項目</Text>
+                  <Text style={{ flex: 3, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>目標内容</Text>
                   <Text style={{ flex: 3, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>評価基準</Text>
                 </View>
-                {deptGoals.map(goal => (
+                {deptGoals.map(goal => {
+                  const catLabel: Record<string, string> = { company: '全社目標', skill: '業務スキル', challenge: 'チャレンジ', teamwork: 'チームワーク' }
+                  return (
                   <View key={goal.id} style={styles.tableRow}>
-                    <View style={{ flex: 5, padding: 4 }}>
-                      {goal.department === null && <Text style={{ fontSize: 7, color: '#dc2626', marginBottom: 1 }}>全社共通</Text>}
+                    <Text style={{ flex: 2, padding: 4, fontSize: 7 }}>{catLabel[goal.category || ''] || goal.category || ''}</Text>
+                    <View style={{ flex: 4, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>
                       <Text style={{ fontSize: 8 }}>{goal.goal_title}</Text>
                       {goal.target_value && <Text style={{ fontSize: 7, color: '#2563eb', marginTop: 1 }}>目標: {goal.target_value.toLocaleString()}{goal.target_unit}</Text>}
                     </View>
-                    <Text style={{ flex: 4, padding: 4, fontSize: 7, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>{goal.goal_description || ''}</Text>
+                    <Text style={{ flex: 3, padding: 4, fontSize: 7, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>{goal.goal_description || ''}</Text>
                     <Text style={{ flex: 3, padding: 4, fontSize: 7, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>{goal.eval_criteria || ''}</Text>
                   </View>
-                ))}
+                )})}
               </View>
             )}
             {categories.map(cat => {
