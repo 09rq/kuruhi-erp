@@ -274,6 +274,27 @@ export default function EvaluationPage() {
             <View style={{ padding: 4, backgroundColor: '#f3f4f6', borderRadius: 3, marginBottom: 8 }}>
               <Text style={{ fontSize: 7, color: '#555' }}>【総合評価基準】S：95点以上　A：80〜94点　B：70〜79点　C：60〜69点　D：60点未満　（満点110点）</Text>
             </View>
+            {deptGoals.length > 0 && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { backgroundColor: '#1e40af' }]}>自部門の目標（参照）</Text>
+                <View style={styles.tableHeader}>
+                  <Text style={{ flex: 5, padding: 4 }}>目標項目</Text>
+                  <Text style={{ flex: 4, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>目標内容</Text>
+                  <Text style={{ flex: 3, padding: 4, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>評価基準</Text>
+                </View>
+                {deptGoals.map(goal => (
+                  <View key={goal.id} style={styles.tableRow}>
+                    <View style={{ flex: 5, padding: 4 }}>
+                      {goal.department === null && <Text style={{ fontSize: 7, color: '#dc2626', marginBottom: 1 }}>全社共通</Text>}
+                      <Text style={{ fontSize: 8 }}>{goal.goal_title}</Text>
+                      {goal.target_value && <Text style={{ fontSize: 7, color: '#2563eb', marginTop: 1 }}>目標: {goal.target_value.toLocaleString()}{goal.target_unit}</Text>}
+                    </View>
+                    <Text style={{ flex: 4, padding: 4, fontSize: 7, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>{goal.goal_description || ''}</Text>
+                    <Text style={{ flex: 3, padding: 4, fontSize: 7, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }}>{goal.eval_criteria || ''}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
             {categories.map(cat => {
               const catGoals = goals.filter(g => g.category === cat)
               const kpiCatGoals = kpiActionGoals.filter(kg => kg.eval_category === cat)
