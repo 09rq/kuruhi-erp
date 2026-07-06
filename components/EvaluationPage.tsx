@@ -138,7 +138,7 @@ export default function EvaluationPage() {
         .from('kpi_goals')
         .select('*')
         .eq('fiscal_year', fiscalYear === 63 ? 2026 : fiscalYear)
-        .or(`department.eq.${target.department},department.is.null`)
+        .eq('department', target.department)
         .order('created_at')
       setDeptGoals(deptGoalsData || [])
 
