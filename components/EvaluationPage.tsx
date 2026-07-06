@@ -38,6 +38,17 @@ function getTotalLabel(score: number) {
   return { label: 'D評価', color: 'text-red-700' }
 }
 
+interface KpiGoal {
+  id: string
+  goal_title: string
+  goal_description: string | null
+  target_value: number | null
+  target_unit: string | null
+  eval_criteria: string | null
+  category: string | null
+  department: string | null
+}
+
 interface KpiMember {
   id: string; name: string; email: string
   department: Department; position: Position; can_view_all: boolean
@@ -83,6 +94,7 @@ export default function EvaluationPage() {
   })
   const [canViewAll, setCanViewAll] = useState(false)
   const [kpiActionGoals, setKpiActionGoals] = useState<KpiActionGoal[]>([])
+  const [deptGoals, setDeptGoals] = useState<KpiGoal[]>([])
   const [fiscalYear, setFiscalYear] = useState(63)
   const [availableFiscalYears, setAvailableFiscalYears] = useState<number[]>([63, 64])
 
@@ -120,6 +132,15 @@ export default function EvaluationPage() {
         .single()
       setSelfOverallComment(overallData?.self_comment || '')
       setManagerOverallComment(overallData?.manager_comment || '')
+
+      // 部門目標を取得（自部門＋全社共通）
+      const { data: deptGoalsData } = await supabase
+        .from('kpi_goals')
+        .select('*')
+        .eq('fiscal_year', fiscalYear === 63 ? 2026 : fiscalYear)
+        .or(`department.eq.${target.department},department.is.null`)
+        .order('created_at')
+      setDeptGoals(deptGoalsData || [])
 
       // KPIアクション目標（eval_categoryが設定されているもの）を取得
       const { data: kpiGoalsData } = await supabase
@@ -424,6 +445,28 @@ export default function EvaluationPage() {
           </select>
         </div>
       </div>
+
+      {/* 自部門の目標 */}
+      {deptGoals.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+          <h3 className="text-sm font-bold text-blue-900 mb-3">🎯 自部門の目標（参照）</h3>
+          <div className="space-y-3">
+            {deptGoals.map(goal => (
+              <div key={goal.id} className="bg-white rounded-lg p-3 border border-blue-100">
+                <div className="flex items-center gap-2 mb-1">
+                  {goal.department === null && (
+                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">全社共通</span>
+                  )}
+                  <p className="text-sm font-medium text-gray-900">{goal.goal_title}</p>
+                </div>
+                {goal.goal_description && <p className="text-xs text-gray-500 mt-1">{goal.goal_description}</p>}
+                {goal.eval_criteria && <p className="text-xs text-orange-600 mt-1">評価基準: {goal.eval_criteria}</p>}
+                {goal.target_value && <p className="text-xs text-blue-700 font-bold mt-1">目標値: {goal.target_value.toLocaleString()}{goal.target_unit}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 評価基準 */}
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 text-xs">
