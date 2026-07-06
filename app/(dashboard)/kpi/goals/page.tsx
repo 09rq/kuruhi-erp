@@ -286,6 +286,26 @@ export default function KpiGoalsPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">運用上のポイント</label>
+                      <textarea
+                        value={goal.key_points ?? ''}
+                        onChange={e => updateRow(goal.id, 'key_points', e.target.value || null)}
+                        className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="例：月次での進捗確認を必ず実施する"
+                        rows={2}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">具体例</label>
+                      <textarea
+                        value={goal.examples ?? ''}
+                        onChange={e => updateRow(goal.id, 'examples', e.target.value || null)}
+                        className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="例：前期比10%増の受注を獲得した場合"
+                        rows={2}
+                      />
+                    </div>
+                    <div>
                         <label className="text-xs font-medium text-gray-500 mb-1 block">目標値</label>
                         <input
                           type="number"
