@@ -147,8 +147,6 @@ export default function EvalGoalsPage() {
             description: goal.description,
             key_points: goal.key_points,
             examples: goal.examples,
-            key_points: goal.key_points,
-            examples: goal.examples,
           })
         } else {
           await supabase.from('eval_goals').update({
@@ -160,8 +158,6 @@ export default function EvalGoalsPage() {
             sort_order: goal.sort_order,
             eval_type: goal.eval_type,
             description: goal.description,
-            key_points: goal.key_points,
-            examples: goal.examples,
             key_points: goal.key_points,
             examples: goal.examples,
           }).eq('id', goal.id)
