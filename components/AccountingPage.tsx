@@ -116,10 +116,10 @@ export default function AccountingPage() {
         }
         if (!name) continue
 
-        // カテゴリ行の判定（月次データが全て空）
+        // カテゴリ行の判定（月次データが全て空または0）
         const hasData = monthIndices.some(m => cols[m.idx] && cols[m.idx] !== '' && cols[m.idx] !== '0')
-        const isAllEmpty = monthIndices.every(m => !cols[m.idx] || cols[m.idx] === '')
-        if (isAllEmpty && nameIdx === 0) {
+        const isAllEmpty = monthIndices.every(m => !cols[m.idx] || cols[m.idx] === '' || cols[m.idx] === '0')
+        if (isAllEmpty) {
           currentCategory = name
           continue
         }
