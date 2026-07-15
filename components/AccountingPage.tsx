@@ -90,6 +90,58 @@ export default function AccountingPage() {
     const results: BudgetActual[] = []
     let currentCategory = ''
 
+    // ヘッダー行から月次列のインデックスを取得
+    const headerCols = lines[1]?.split(',').map(c => c.replace(/"/g, '').trim()) || []
+    const monthIndices: { month: string; idx: number }[] = []
+    headerCols.forEach((col, idx) => {
+      if (col.match(/^\d{4}-\d{2}$/)) {
+        monthIndices.push({ month: col, idx })
+      }
+    })
+
+    // 月次推移形式の場合
+    if (monthIndices.length > 0) {
+      for (let i = 2; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.replace(/"/g, '').trim())
+        // 勘定科目名を取得（空でない最初の列）
+        let name = ''
+        let nameIdx = 0
+        for (let j = 0; j < Math.min(6, cols.length); j++) {
+          if (cols[j] && cols[j] !== '') {
+            name = cols[j]
+            nameIdx = j
+            break
+          }
+        }
+        if (!name) continue
+
+        // カテゴリ行の判定（月次データが全て空）
+        const hasData = monthIndices.some(m => cols[m.idx] && cols[m.idx] !== '' && cols[m.idx] !== '0')
+        const isAllEmpty = monthIndices.every(m => !cols[m.idx] || cols[m.idx] === '')
+        if (isAllEmpty && nameIdx === 0) {
+          currentCategory = name
+          continue
+        }
+
+        // 各月のデータを追加
+        monthIndices.forEach(({ month, idx }) => {
+          const balance = Number(cols[idx]?.replace(/,/g, '') || 0)
+          if (balance !== 0 || hasData) {
+            results.push({
+              account_name: name,
+              account_category: currentCategory,
+              balance,
+              ratio: 0,
+              report_type: type,
+              year_month: month,
+            })
+          }
+        })
+      }
+      return results
+    }
+
+    // 従来の単月形式
     for (let i = 2; i < lines.length; i++) {
       const cols = lines[i].split(',').map(c => c.replace(/"/g, '').trim())
       if (!cols[0] || cols[0] === '') continue
@@ -137,8 +189,8 @@ export default function AccountingPage() {
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file || !selectedMonth) {
-      setUploadMessage({ type: 'error', text: '対象月とファイルを選択してください' })
+    if (!file) {
+      setUploadMessage({ type: 'error', text: 'ファイルを選択してください' })
       return
     }
 
@@ -171,9 +223,17 @@ export default function AccountingPage() {
 
       const insertData = rows.map(r => ({ ...r, import_id: importRecord.id }))
 
-      await supabase.from('budget_actuals').delete()
-        .eq('year_month', selectedMonth)
-        .eq('report_type', reportType)
+      // 月次推移形式の場合は複数月を削除
+      const months = [...new Set(rows.map(r => r.year_month))]
+      if (months.length > 1) {
+        await supabase.from('budget_actuals').delete()
+          .in('year_month', months)
+          .eq('report_type', reportType)
+      } else {
+        await supabase.from('budget_actuals').delete()
+          .eq('year_month', selectedMonth)
+          .eq('report_type', reportType)
+      }
 
       const { error: dataError } = await supabase
         .from('budget_actuals')
