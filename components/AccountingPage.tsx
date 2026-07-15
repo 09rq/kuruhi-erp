@@ -74,6 +74,7 @@ export default function AccountingPage() {
         .select('*')
         .order('year_month', { ascending: false })
       setBudgetActuals(actuals || [])
+      console.log('[budget] 取得月一覧:', [...new Set((actuals || []).map((a: {year_month: string}) => a.year_month))].sort())
 
       if (!selectedMonth && history && history.length > 0) {
         setSelectedMonth(history[0].year_month)
