@@ -134,6 +134,7 @@ export default function KpiPage() {
   async function handleSaveCost() {
     setSaving(true); setSaveMessage(null)
     try {
+      console.log('[cost] costInput:', costInput)
       const { error } = await supabase.from('monthly_costs').upsert(costInput, { onConflict: 'year_month' })
       if (error) throw error
       setSaveMessage('保存しました'); fetchData()
