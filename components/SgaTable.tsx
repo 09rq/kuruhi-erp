@@ -44,15 +44,26 @@ export default function SgaTable({ yearMonth }: Props) {
       const budgetMap: Record<string, number> = {}
       budgets?.forEach(b => { budgetMap[b.account_name] = b.budget_amount })
 
-      const merged: SgaItem[] = (actuals || [])
-        .filter(a => !EXCLUDE.includes(a.account_name))
-        .map(a => ({
-          account_name: a.account_name,
-          actual: a.balance,
-          budget: budgetMap[a.account_name] || 0,
-          ratio: a.ratio,
+      // 実績と予算の両方を統合（どちらかあれば表示）
+      const actualMap: Record<string, number> = {}
+      ;(actuals || []).filter(a => !EXCLUDE.includes(a.account_name)).forEach(a => {
+        actualMap[a.account_name] = a.balance
+      })
+      
+      const allNames = new Set([
+        ...Object.keys(actualMap),
+        ...Object.keys(budgetMap),
+      ])
+      
+      const merged: SgaItem[] = Array.from(allNames)
+        .filter(name => !EXCLUDE.includes(name))
+        .map(name => ({
+          account_name: name,
+          actual: actualMap[name] || 0,
+          budget: budgetMap[name] || 0,
+          ratio: 0,
         }))
-        .sort((a, b) => b.actual - a.actual)
+        .sort((a, b) => b.budget - a.budget)
 
       setItems(merged)
     } catch (e) { console.error(e) } finally { setLoading(false) }
