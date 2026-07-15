@@ -75,7 +75,6 @@ export default function AccountingPage() {
         .order('year_month', { ascending: false })
         .limit(5000)
       setBudgetActuals(actuals || [])
-      console.log('[budget] 取得月一覧:', [...new Set((actuals || []).map((a: {year_month: string}) => a.year_month))].sort())
 
       if (!selectedMonth && history && history.length > 0) {
         setSelectedMonth(history[0].year_month)
@@ -207,12 +206,7 @@ export default function AccountingPage() {
       const decoder = new TextDecoder('shift-jis')
       const text = decoder.decode(buffer)
 
-      console.log('[CSV] 先頭200文字:', text.substring(0, 200))
-      const lines = text.split('\n').filter(l => l.trim())
-      console.log('[CSV] 行数:', lines.length)
-      console.log('[CSV] 2行目:', lines[1]?.substring(0, 200))
       const rows = parseFreeeCSV(text, reportType)
-      console.log('[CSV] パース結果:', rows.length, '件')
       if (rows.length === 0) throw new Error('データが読み取れませんでした')
 
       const { data: importRecord, error: importError } = await supabase
