@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createEmployee, updateEmployee } from './actions'
 import type { Employee } from '@/lib/types/employee'
+import { DEPARTMENTS } from '@/lib/constants/departments'
 
-const DEPARTMENTS = ['管理本部', '営業部', '企画開発部', '生産管理部', '品質管理部']
 const EMPLOYMENT_TYPES = ['役員', '管理職', '正社員', '限定社員', '時給社員']
 
 const inputCls =

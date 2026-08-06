@@ -12,8 +12,8 @@ import {
   PRODUCT_STATUS_LABELS,
   MATERIAL_COST_CATEGORIES,
   OUTSOURCE_PROCESSES,
-  LABOR_PROCESSES,
 } from '@/lib/types/product'
+import { DEPARTMENTS } from '@/lib/constants/departments'
 
 // ────────────────────────────────────────────────────────────
 // 型定義
@@ -302,9 +302,9 @@ function MaterialRow({
           </select>
         </SelWrap>
       </td>
-      {/* 取引先 */}
+      {/* 取引先（簡易見積・標準原価とも取引先マスタから検索できる） */}
       <td className="px-2 py-1.5" style={{ width: 120, minWidth: 120 }}>
-        {isStandard && supplierOptions.length > 0 ? (
+        {supplierOptions.length > 0 ? (
           <SupplierCombobox
             value={row.supplier}
             options={supplierOptions}
@@ -446,21 +446,14 @@ function OutsourceRow({
           </select>
         </SelWrap>
       </td>
-      {/* 外注先名（ベンダー選択） */}
+      {/* 外注先名（入力すると取引先候補が出るコンボボックス） */}
       <td className="px-2 py-1.5" style={{ width: 130, minWidth: 130 }}>
         {vendors && vendors.length > 0 ? (
-          <SelWrap>
-            <select
-              value={row.supplier}
-              onChange={(e) => set({ supplier: e.target.value })}
-              className={cellSelect}
-            >
-              <option value="">選択</option>
-              {vendors.map((v) => (
-                <option key={v.id} value={v.short_name}>{v.short_name}</option>
-              ))}
-            </select>
-          </SelWrap>
+          <SupplierCombobox
+            value={row.supplier}
+            options={vendors}
+            onChange={(v) => set({ supplier: v })}
+          />
         ) : (
           <input
             type="text"
@@ -539,8 +532,8 @@ function LaborRow({
             className={cellSelect}
           >
             <option value="">選択</option>
-            {LABOR_PROCESSES.map((p) => (
-              <option key={p.name} value={p.name}>{p.name}</option>
+            {DEPARTMENTS.map((d) => (
+              <option key={d} value={d}>{d}</option>
             ))}
           </select>
         </SelWrap>
