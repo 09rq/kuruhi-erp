@@ -13,9 +13,11 @@ interface SgaItem {
 
 interface Props {
   yearMonth: string
+  // 通期（年間累計）表示のときにセットされる期間。nullなら通常の単月表示。
+  fullYearRange?: { start: string; end: string } | null
 }
 
-export default function SgaTable({ yearMonth }: Props) {
+export default function SgaTable({ yearMonth, fullYearRange }: Props) {
   const supabase = createClient()
   const [items, setItems] = useState<SgaItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,25 +31,32 @@ export default function SgaTable({ yearMonth }: Props) {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const { data: actuals } = await supabase
+      let actualsQuery = supabase
         .from('budget_actuals')
-        .select('account_name, balance, ratio')
-        .eq('year_month', yearMonth)
+        .select('account_name, balance, ratio, year_month')
         .eq('report_type', 'pl')
         .eq('account_category', '販売管理費')
+      let budgetsQuery = supabase.from('budgets').select('account_name, budget_amount, year_month')
 
-      const { data: budgets } = await supabase
-        .from('budgets')
-        .select('account_name, budget_amount')
-        .eq('year_month', yearMonth)
+      if (fullYearRange) {
+        // 通期（年間累計）：期間内の全月を合算する
+        actualsQuery = actualsQuery.gte('year_month', fullYearRange.start).lte('year_month', fullYearRange.end)
+        budgetsQuery = budgetsQuery.gte('year_month', fullYearRange.start).lte('year_month', fullYearRange.end)
+      } else {
+        actualsQuery = actualsQuery.eq('year_month', yearMonth)
+        budgetsQuery = budgetsQuery.eq('year_month', yearMonth)
+      }
+
+      const { data: actuals } = await actualsQuery
+      const { data: budgets } = await budgetsQuery
 
       const budgetMap: Record<string, number> = {}
-      budgets?.forEach(b => { budgetMap[b.account_name] = b.budget_amount })
+      budgets?.forEach(b => { budgetMap[b.account_name] = (budgetMap[b.account_name] || 0) + Number(b.budget_amount) })
 
-      // 実績と予算の両方を統合（どちらかあれば表示）
+      // 実績と予算の両方を統合（どちらかあれば表示）。通期の場合は期間内の月を合算する。
       const actualMap: Record<string, number> = {}
       ;(actuals || []).filter(a => !EXCLUDE.includes(a.account_name)).forEach(a => {
-        actualMap[a.account_name] = a.balance
+        actualMap[a.account_name] = (actualMap[a.account_name] || 0) + Number(a.balance)
       })
       
       const allNames = new Set([
@@ -67,7 +76,7 @@ export default function SgaTable({ yearMonth }: Props) {
 
       setItems(merged)
     } catch (e) { console.error(e) } finally { setLoading(false) }
-  }, [supabase, yearMonth])
+  }, [supabase, yearMonth, fullYearRange])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -97,6 +106,9 @@ export default function SgaTable({ yearMonth }: Props) {
         <div className="flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-green-600" />
           <h3 className="text-sm font-bold text-gray-900">販管費 予実管理</h3>
+          {fullYearRange && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">通期（年間累計）</span>
+          )}
         </div>
         <div className={`text-sm font-bold px-3 py-1 rounded-full ${totalDiff > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
           合計差異: {totalDiff > 0 ? '▲' : '▼'} {Math.abs(totalDiff).toLocaleString()}円
@@ -155,7 +167,9 @@ export default function SgaTable({ yearMonth }: Props) {
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="text-center px-3 py-2">
-                    {isEditing ? (
+                    {fullYearRange ? (
+                      <span className="text-xs text-gray-300">-</span>
+                    ) : isEditing ? (
                       <div className="flex gap-1 justify-center">
                         <button onClick={() => handleSaveBudget(item.account_name)} disabled={saving} className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded hover:bg-blue-700 disabled:opacity-50">保存</button>
                         <button onClick={() => setEditingBudget(null)} className="text-xs text-gray-400 px-2 py-0.5 rounded hover:bg-gray-100">取消</button>

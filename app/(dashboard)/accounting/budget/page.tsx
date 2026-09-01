@@ -6,10 +6,12 @@ import { Save, ChevronLeft } from 'lucide-react'
 
 const ACCOUNT_NAMES = [
   '役員報酬',
-  '給与手当',
+  '給料手当',
   '賞与',
+  '退職金',
   '法定福利費',
   '福利厚生費',
+  '採用教育費',
   '広告宣伝費',
   '交際費',
   '会議費',

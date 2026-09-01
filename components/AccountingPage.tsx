@@ -35,6 +35,9 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
 
 const KEY_ACCOUNTS = ['売上高 計', '売上総損益金額', '材料費 計', '労務費 計', '製造経費 計', '製造原価']
 
+// 「表示する月」で選ぶ特別な値：通期（年間累計）
+const FULL_YEAR_VALUE = '__FULL_YEAR__'
+
 export default function AccountingPage() {
   const supabase = createClient()
   const [myRole, setMyRole] = useState<string | null>(null)
@@ -253,9 +256,28 @@ export default function AccountingPage() {
     }
   }
 
-  const filteredActuals = budgetActuals.filter(a =>
-    (!selectedMonth || a.year_month === selectedMonth)
-  )
+  const activeFyTarget = selectedFiscalYear
+    ? fiscalYearTargets.find(t => t.fiscal_year === selectedFiscalYear)
+    : null
+  const isFullYear = selectedMonth === FULL_YEAR_VALUE
+
+  // 「通期（年間累計）」が選ばれている場合は、選択中の期に含まれる月を全て合算する
+  const filteredActuals: BudgetActual[] = (isFullYear && activeFyTarget)
+    ? (() => {
+        const inRange = budgetActuals.filter(a =>
+          a.year_month >= activeFyTarget.start_month && a.year_month <= activeFyTarget.end_month
+        )
+        const merged: Record<string, BudgetActual> = {}
+        inRange.forEach(a => {
+          const key = `${a.report_type}__${a.account_name}`
+          if (!merged[key]) {
+            merged[key] = { ...a, balance: 0, ratio: 0, year_month: FULL_YEAR_VALUE }
+          }
+          merged[key].balance += Number(a.balance)
+        })
+        return Object.values(merged)
+      })()
+    : budgetActuals.filter(a => (!selectedMonth || a.year_month === selectedMonth))
 
   const plData = filteredActuals.filter(a => a.report_type === 'pl')
   const mfgData = filteredActuals.filter(a => a.report_type === 'mfg')
@@ -273,6 +295,11 @@ export default function AccountingPage() {
   const laborRate = revenue > 0 ? ((laborCost / revenue) * 100).toFixed(1) : '0.0'
   const outsourceRate = revenue > 0 ? ((outsourceCost / revenue) * 100).toFixed(1) : '0.0'
   const freightRate = revenue > 0 ? ((freightCost / revenue) * 100).toFixed(1) : '0.0'
+
+  // 通期表示のときに画面・PDF・AI要約に渡す表示用ラベル（例：2026-06〜2027-05（通期））
+  const displayYearMonth = isFullYear && activeFyTarget
+    ? `${activeFyTarget.start_month}〜${activeFyTarget.end_month}（通期）`
+    : selectedMonth
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>
 
@@ -301,7 +328,7 @@ export default function AccountingPage() {
         </button>
         {activeTab === 'dashboard' && revenue > 0 && selectedMonth && (
           <MonthlyReportPdf
-            yearMonth={selectedMonth}
+            yearMonth={displayYearMonth}
             revenue={revenue}
             grossProfit={grossProfit}
             grossMargin={grossMargin}
@@ -358,6 +385,9 @@ export default function AccountingPage() {
                 className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="">月を選択</option>
+                {selectedFiscalYear && activeFyTarget && (
+                  <option value={FULL_YEAR_VALUE}>📊 通期（年間累計）</option>
+                )}
                 {(() => {
                   const allMonths = [...new Set(budgetActuals.map(a => a.year_month))].sort().reverse()
                   if (!selectedFiscalYear) return allMonths.map(m => <option key={m} value={m}>{m}</option>)
@@ -446,13 +476,19 @@ export default function AccountingPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {plData.filter(a => KEY_ACCOUNTS.includes(a.account_name) || a.account_category === '販売管理費').map(a => (
-                      <tr key={a.account_name} className={`${KEY_ACCOUNTS.includes(a.account_name) ? 'bg-blue-50 font-medium' : ''}`}>
-                        <td className="text-sm text-gray-800 px-3 py-2">{a.account_name}</td>
-                        <td className="text-sm text-right text-gray-800 px-3 py-2">{Number(a.balance).toLocaleString()}</td>
-                        <td className="text-sm text-right text-gray-500 px-3 py-2">{a.ratio}%</td>
-                      </tr>
-                    ))}
+                    {plData.filter(a => KEY_ACCOUNTS.includes(a.account_name) || a.account_category === '販売管理費').map(a => {
+                      // 通期表示の場合、ratioはCSVに入っていないため売上高から計算し直す
+                      const displayRatio = isFullYear
+                        ? (revenue > 0 ? ((Number(a.balance) / Number(revenue)) * 100).toFixed(1) : '0.0')
+                        : a.ratio
+                      return (
+                        <tr key={a.account_name} className={`${KEY_ACCOUNTS.includes(a.account_name) ? 'bg-blue-50 font-medium' : ''}`}>
+                          <td className="text-sm text-gray-800 px-3 py-2">{a.account_name}</td>
+                          <td className="text-sm text-right text-gray-800 px-3 py-2">{Number(a.balance).toLocaleString()}</td>
+                          <td className="text-sm text-right text-gray-500 px-3 py-2">{displayRatio}%</td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -535,10 +571,13 @@ export default function AccountingPage() {
         </div>
       )}
       {activeTab === "dashboard" && revenue > 0 && (
-        <AiSummary yearMonth={selectedMonth} plData={plData} mfgData={mfgData} />
+        <AiSummary yearMonth={displayYearMonth} plData={plData} mfgData={mfgData} />
       )}
       {activeTab === "dashboard" && selectedMonth && (
-        <SgaTable yearMonth={selectedMonth} />
+        <SgaTable
+          yearMonth={selectedMonth}
+          fullYearRange={isFullYear && activeFyTarget ? { start: activeFyTarget.start_month, end: activeFyTarget.end_month } : null}
+        />
       )}
       {activeTab === "dashboard" && (
         <KpiTargetSettings fiscalYear={selectedFiscalYear} />
