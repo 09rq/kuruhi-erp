@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TrendingUp } from 'lucide-react'
-import Link from 'next/link'
 
 interface BudgetActual {
   account_name: string
@@ -14,13 +13,23 @@ interface BudgetActual {
   year_month: string
 }
 
+interface FiscalYearTarget {
+  fiscal_year: number
+  start_month: string
+  end_month: string
+}
+
+// 「表示する月」で選ぶ特別な値：通期（年間累計）
+const FULL_YEAR_VALUE = '__FULL_YEAR__'
+
 export default function DashboardCostSummary() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [visible, setVisible] = useState(false)
-  const [yearMonth, setYearMonth] = useState<string | null>(null)
-  const [plData, setPlData] = useState<BudgetActual[]>([])
-  const [mfgData, setMfgData] = useState<BudgetActual[]>([])
+  const [budgetActuals, setBudgetActuals] = useState<BudgetActual[]>([])
+  const [fiscalYearTargets, setFiscalYearTargets] = useState<FiscalYearTarget[]>([])
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<number | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState('')
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -41,24 +50,26 @@ export default function DashboardCostSummary() {
       }
       setVisible(true)
 
-      // 直近で取り込まれた月（freeeインポート履歴）を「最新月」として使う
       const { data: history } = await supabase
         .from('freee_imports')
         .select('year_month')
         .order('imported_at', { ascending: false })
         .limit(1)
 
-      const latestMonth = history?.[0]?.year_month
-      if (!latestMonth) { setYearMonth(null); return }
-      setYearMonth(latestMonth)
-
       const { data: actuals } = await supabase
         .from('budget_actuals')
         .select('*')
-        .eq('year_month', latestMonth)
+        .order('year_month', { ascending: false })
+        .limit(5000)
+      setBudgetActuals(actuals || [])
 
-      setPlData((actuals || []).filter(a => a.report_type === 'pl'))
-      setMfgData((actuals || []).filter(a => a.report_type === 'mfg'))
+      setSelectedMonth(prev => prev || (history && history.length > 0 ? history[0].year_month : ''))
+
+      const { data: fyData } = await supabase
+        .from('fiscal_year_targets')
+        .select('fiscal_year, start_month, end_month')
+        .order('fiscal_year', { ascending: false })
+      setFiscalYearTargets(fyData || [])
     } catch (e) {
       console.error(e)
     } finally {
@@ -69,6 +80,32 @@ export default function DashboardCostSummary() {
   useEffect(() => { fetchData() }, [fetchData])
 
   if (loading || !visible) return null
+
+  const activeFyTarget = selectedFiscalYear
+    ? fiscalYearTargets.find(t => t.fiscal_year === selectedFiscalYear)
+    : null
+  const isFullYear = selectedMonth === FULL_YEAR_VALUE
+
+  // 「通期（年間累計）」が選ばれている場合は、選択中の期に含まれる月を全て合算する
+  const filteredActuals: BudgetActual[] = (isFullYear && activeFyTarget)
+    ? (() => {
+        const inRange = budgetActuals.filter(a =>
+          a.year_month >= activeFyTarget.start_month && a.year_month <= activeFyTarget.end_month
+        )
+        const merged: Record<string, BudgetActual> = {}
+        inRange.forEach(a => {
+          const key = `${a.report_type}__${a.account_name}`
+          if (!merged[key]) {
+            merged[key] = { ...a, balance: 0, ratio: 0, year_month: FULL_YEAR_VALUE }
+          }
+          merged[key].balance += Number(a.balance)
+        })
+        return Object.values(merged)
+      })()
+    : budgetActuals.filter(a => (!selectedMonth || a.year_month === selectedMonth))
+
+  const plData = filteredActuals.filter(a => a.report_type === 'pl')
+  const mfgData = filteredActuals.filter(a => a.report_type === 'mfg')
 
   const revenue = plData.find(a => a.account_name === '売上高 計')?.balance || 0
   const grossProfit = plData.find(a => a.account_name === '売上総損益金額')?.balance || 0
@@ -86,20 +123,59 @@ export default function DashboardCostSummary() {
 
   return (
     <div className="mt-8 bg-white rounded-xl border border-gray-200 p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-green-700" />
-          <h2 className="text-base font-semibold text-gray-900">予実管理サマリー</h2>
-          {yearMonth && <span className="text-xs text-gray-400">（{yearMonth}）</span>}
-        </div>
-        <Link href="/accounting" className="text-xs text-blue-600 hover:underline">
-          詳細を見る →
-        </Link>
+      <div className="flex items-center gap-2 mb-4">
+        <TrendingUp className="h-5 w-5 text-green-700" />
+        <h2 className="text-base font-semibold text-gray-900">予実管理サマリー</h2>
       </div>
 
-      {!yearMonth || revenue === 0 ? (
+      <div className="flex gap-3 mb-6 flex-wrap">
+        <div>
+          <label className="text-xs font-medium text-gray-500 mb-1 block">期で絞り込む</label>
+          <select
+            value={selectedFiscalYear ?? ''}
+            onChange={e => {
+              const fy = e.target.value ? Number(e.target.value) : null
+              setSelectedFiscalYear(fy)
+              if (fy) {
+                const target = fiscalYearTargets.find(t => t.fiscal_year === fy)
+                if (target) setSelectedMonth(target.start_month)
+              }
+            }}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="">すべての期</option>
+            {fiscalYearTargets.map(t => (
+              <option key={t.fiscal_year} value={t.fiscal_year}>第{t.fiscal_year}期</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-gray-500 mb-1 block">表示する月</label>
+          <select
+            value={selectedMonth}
+            onChange={e => setSelectedMonth(e.target.value)}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="">月を選択</option>
+            {selectedFiscalYear && activeFyTarget && (
+              <option value={FULL_YEAR_VALUE}>📊 通期（年間累計）</option>
+            )}
+            {(() => {
+              const allMonths = [...new Set(budgetActuals.map(a => a.year_month))].sort().reverse()
+              if (!selectedFiscalYear) return allMonths.map(m => <option key={m} value={m}>{m}</option>)
+              const target = fiscalYearTargets.find(t => t.fiscal_year === selectedFiscalYear)
+              if (!target) return allMonths.map(m => <option key={m} value={m}>{m}</option>)
+              return allMonths.filter(m => m >= target.start_month && m <= target.end_month).map(m => <option key={m} value={m}>{m}</option>)
+            })()}
+          </select>
+        </div>
+      </div>
+
+      {revenue === 0 ? (
         <p className="text-sm text-gray-400 text-center py-6">
-          まだfreeeのデータが取り込まれていません。「予実管理」画面からCSVを取り込んでください。
+          {budgetActuals.length === 0
+            ? 'まだfreeeのデータが取り込まれていません。'
+            : '選択した月のデータがありません。上の「表示する月」から月を選択してください。'}
         </p>
       ) : (
         <>
