@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import DashboardCostSummary from '@/components/DashboardCostSummary'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -31,6 +32,9 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* 予実管理サマリー（売上高・粗利益・粗利率・製造原価・原価率分析） */}
+      <DashboardCostSummary />
 
       {/* お知らせ */}
       <div className="mt-8 bg-white rounded-xl border border-gray-200 p-5">
