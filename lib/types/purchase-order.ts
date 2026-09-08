@@ -30,6 +30,7 @@ export interface PurchaseOrderItem {
   model_name: string | null
   color: string | null
   quantity: number
+  received_quantity: number | null
   unit: string | null
   unit_price: number
   amount: number

@@ -145,7 +145,7 @@ export async function updatePurchaseOrder(
   redirect('/purchases')
 }
 
-// ─── ステータス更新 ───────────────────────────────────
+// ─── ステータス更新（納品済 以外の単純な遷移） ───────────────────────────
 export async function updatePOStatus(id: string, status: POStatus) {
   const supabase = await createClient()
   const { error } = await supabase
@@ -154,53 +154,77 @@ export async function updatePOStatus(id: string, status: POStatus) {
     .eq('id', id)
   if (error) throw new Error(error.message)
 
-  // 納品済になった時に材料在庫を自動加算
-  if (status === 'delivered') {
-    const { data: po } = await supabase
-      .from('purchase_orders')
-      .select('order_date, purchase_order_items(material_id, quantity, unit_price, item_name)')
-      .eq('id', id)
+  revalidatePath('/purchases')
+}
+
+// ─── 納品済にする（実納品数量を反映して在庫加算） ─────────────────────────
+// 革などの実測材料は発注数量と納品数量がぴったり一致しないことが多いため、
+// 各明細について実際に届いた数量（received_quantity）を受け取り、それを在庫に加算する。
+export async function markPODelivered(
+  id: string,
+  receivedQuantities: Record<string, number>
+) {
+  const supabase = await createClient()
+
+  const { data: po } = await supabase
+    .from('purchase_orders')
+    .select('order_date, purchase_order_items(id, material_id, quantity, unit_price, item_name)')
+    .eq('id', id)
+    .single()
+
+  if (!po) throw new Error('発注書が見つかりません')
+
+  const today = new Date().toISOString().slice(0, 10)
+
+  for (const item of po.purchase_order_items || []) {
+    const actualQty = Number(receivedQuantities[item.id] ?? item.quantity)
+
+    // 実納品数量を明細に記録
+    await supabase
+      .from('purchase_order_items')
+      .update({ received_quantity: actualQty })
+      .eq('id', item.id)
+
+    if (!item.material_id) continue
+
+    // 現在庫を取得して、実納品数量ぶんを加算
+    const { data: mat } = await supabase
+      .from('materials')
+      .select('current_stock')
+      .eq('id', item.material_id)
       .single()
 
-    if (po) {
-      const today = new Date().toISOString().slice(0, 10)
-      for (const item of po.purchase_order_items || []) {
-        if (!item.material_id) continue
+    if (mat) {
+      const newStock = Number(mat.current_stock) + actualQty
+      await supabase
+        .from('materials')
+        .update({
+          current_stock: newStock,
+          month_end_price: item.unit_price,
+          stock_updated_at: new Date().toISOString(),
+        })
+        .eq('id', item.material_id)
 
-        // 現在庫を取得して加算
-        const { data: mat } = await supabase
-          .from('materials')
-          .select('current_stock')
-          .eq('id', item.material_id)
-          .single()
-
-        if (mat) {
-          const newStock = Number(mat.current_stock) + Number(item.quantity)
-          await supabase
-            .from('materials')
-            .update({
-              current_stock: newStock,
-              month_end_price: item.unit_price,
-              stock_updated_at: new Date().toISOString(),
-            })
-            .eq('id', item.material_id)
-
-          // トランザクション記録
-          await supabase.from('material_stock_transactions').insert({
-            material_id: item.material_id,
-            transaction_type: 'purchase_in',
-            quantity: Number(item.quantity),
-            unit_price: item.unit_price,
-            amount: Number(item.quantity) * Number(item.unit_price),
-            reference_type: 'purchase_order',
-            reference_id: id,
-            note: `発注書 納品済`,
-            transaction_date: today,
-          })
-        }
-      }
+      // トランザクション記録（実納品数量ベース）
+      await supabase.from('material_stock_transactions').insert({
+        material_id: item.material_id,
+        transaction_type: 'purchase_in',
+        quantity: actualQty,
+        unit_price: item.unit_price,
+        amount: actualQty * Number(item.unit_price),
+        reference_type: 'purchase_order',
+        reference_id: id,
+        note: `発注書 納品済（実納品数量）`,
+        transaction_date: today,
+      })
     }
   }
+
+  const { error } = await supabase
+    .from('purchase_orders')
+    .update({ status: 'delivered' })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
 
   revalidatePath('/purchases')
 }

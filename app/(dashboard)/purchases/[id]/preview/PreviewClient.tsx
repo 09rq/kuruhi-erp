@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import Link from 'next/link'
-import { updatePOStatus } from '../../actions'
+import { updatePOStatus, markPODelivered } from '../../actions'
 import StatusBadge from '../../StatusBadge'
 import type { PurchaseOrder, PurchaseOrderItem, POStatus } from '@/lib/types/purchase-order'
 import { PO_STATUS_LABELS } from '@/lib/types/purchase-order'
@@ -50,13 +50,43 @@ export default function PreviewClient({ order, company, employeeName }: Props) {
   const [sending, setSending] = useState(false)
   const [sendResult, setSendResult] = useState<string | null>(null)
 
+  const [showReceiveModal, setShowReceiveModal] = useState(false)
+  const [receivedQuantities, setReceivedQuantities] = useState<Record<string, string>>({})
+
   const handleStatusChange = async (next: POStatus) => {
+    if (next === 'delivered') {
+      // 納品済にする場合は、先に実納品数量を確認するモーダルを開く
+      const initial: Record<string, string> = {}
+      for (const item of order.items) {
+        initial[item.id] = String(item.received_quantity ?? item.quantity)
+      }
+      setReceivedQuantities(initial)
+      setShowReceiveModal(true)
+      return
+    }
     setUpdating(true)
     try {
       await updatePOStatus(order.id, next)
       setStatus(next)
     } catch (e) {
       alert('ステータスの更新に失敗しました')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleConfirmDelivery = async () => {
+    setUpdating(true)
+    try {
+      const quantities: Record<string, number> = {}
+      for (const item of order.items) {
+        quantities[item.id] = parseFloat(receivedQuantities[item.id] ?? '') || 0
+      }
+      await markPODelivered(order.id, quantities)
+      setStatus('delivered')
+      setShowReceiveModal(false)
+    } catch (e) {
+      alert('納品済への更新に失敗しました')
     } finally {
       setUpdating(false)
     }
@@ -193,6 +223,64 @@ export default function PreviewClient({ order, company, employeeName }: Props) {
                 className="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200"
               >
                 閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 納品済にする（実納品数量入力）モーダル */}
+      {showReceiveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">実納品数量の入力</h2>
+            <p className="text-xs text-gray-500 mb-4">
+              実際に届いた数量を入力してください（革などの実測材料は発注数量とズレることがあります）。この数量が在庫に加算されます。
+            </p>
+            <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left p-2.5 font-medium text-gray-600">品目</th>
+                    <th className="text-right p-2.5 font-medium text-gray-600">発注数量</th>
+                    <th className="text-right p-2.5 font-medium text-gray-600 w-32">実納品数量</th>
+                    <th className="text-left p-2.5 font-medium text-gray-600 w-16">単位</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.items.map((item) => (
+                    <tr key={item.id} className="border-b border-gray-100 last:border-0">
+                      <td className="p-2.5 text-gray-800">{item.item_name}</td>
+                      <td className="p-2.5 text-right text-gray-500">{item.quantity}</td>
+                      <td className="p-2.5">
+                        <input
+                          type="number"
+                          step="any"
+                          value={receivedQuantities[item.id] ?? ''}
+                          onChange={(e) => setReceivedQuantities((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                          className="w-full text-right px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </td>
+                      <td className="p-2.5 text-gray-500">{item.unit || ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={handleConfirmDelivery}
+                disabled={updating}
+                className="flex-1 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {updating ? '処理中...' : 'この数量で納品済にする'}
+              </button>
+              <button
+                onClick={() => setShowReceiveModal(false)}
+                disabled={updating}
+                className="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200"
+              >
+                キャンセル
               </button>
             </div>
           </div>
