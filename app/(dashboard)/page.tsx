@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import DashboardCostSummary from '@/components/DashboardCostSummary'
 
@@ -56,7 +57,7 @@ export default async function DashboardPage() {
   ).length
 
   const summaryCards = [
-    { label: '今月の売上', value: fmtYen(monthSales), sub: salesDiffLabel, icon: '💹' },
+    { label: '今月の売上', value: fmtYen(monthSales), sub: salesDiffLabel, icon: '💹', link: { href: '/sales/report', label: '売上集計を見る →' } },
     { label: '受注件数', value: `${orderCount} 件`, sub: '今月', icon: '📋' },
     { label: '在庫アラート', value: `${stockAlertCount} 件`, sub: '要補充（材料）', icon: '⚠️' },
   ]
@@ -83,6 +84,11 @@ export default async function DashboardPage() {
             </div>
             <p className="text-2xl font-bold text-gray-900">{card.value}</p>
             <p className="mt-1 text-xs text-gray-400">{card.sub}</p>
+            {card.link && (
+              <Link href={card.link.href} className="mt-2 inline-block text-xs font-medium text-blue-600 hover:underline">
+                {card.link.label}
+              </Link>
+            )}
           </div>
         ))}
       </div>
