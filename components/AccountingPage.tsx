@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { TrendingUp, Upload, FileText, AlertCircle } from 'lucide-react'
 import AiSummary from './AiSummary'
 import CostTrendChart from './CostTrendChart'
+import FiscalYearComparison from './FiscalYearComparison'
 import SgaTable from './SgaTable'
 import KpiTargetSettings from './KpiTargetSettings'
 import FiscalYearTarget from './FiscalYearTarget'
@@ -51,6 +52,7 @@ export default function AccountingPage() {
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<number | null>(null)
   const [fiscalYearTargets, setFiscalYearTargets] = useState<{fiscal_year: number; start_month: string; end_month: string; material_rate_target: number; outsource_rate_target: number; labor_rate_target: number; freight_rate_target: number}[]>([])
   const [reportType, setReportType] = useState<'pl' | 'mfg' | 'bs'>('pl')
+  const [compareEnabled, setCompareEnabled] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -353,7 +355,7 @@ export default function AccountingPage() {
       </div>
 
       {activeTab === 'dashboard' && revenue === 0 && (<div></div>)}
-      {activeTab === 'dashboard' && (<CostTrendChart fiscalYearTarget={selectedFiscalYear ? fiscalYearTargets.find(t => t.fiscal_year === selectedFiscalYear) ?? null : null} />)}
+      {activeTab === 'dashboard' && (<CostTrendChart budgetActuals={budgetActuals} fiscalYearTarget={selectedFiscalYear ? fiscalYearTargets.find(t => t.fiscal_year === selectedFiscalYear) ?? null : null} />)}
       {activeTab === 'dashboard' && (
         <div>
           <div className="flex gap-3 mb-6 flex-wrap">
@@ -397,7 +399,26 @@ export default function AccountingPage() {
                 })()}
               </select>
             </div>
+            {selectedFiscalYear && (
+              <label className="flex items-center gap-2 self-end pb-2 text-sm text-gray-600 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={compareEnabled}
+                  onChange={(e) => setCompareEnabled(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                前期と比較
+              </label>
+            )}
           </div>
+
+          {selectedFiscalYear && compareEnabled && activeFyTarget && (
+            <FiscalYearComparison
+              budgetActuals={budgetActuals}
+              currentTarget={activeFyTarget}
+              previousTarget={fiscalYearTargets.find(t => t.fiscal_year === selectedFiscalYear - 1) ?? null}
+            />
+          )}
 
           {revenue === 0 ? (
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-12 text-center">
