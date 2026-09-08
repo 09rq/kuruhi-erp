@@ -1,11 +1,65 @@
 import { createClient } from '@/lib/supabase/server'
 import DashboardCostSummary from '@/components/DashboardCostSummary'
 
+function fmtYen(n: number) {
+  return `¥${Math.round(n).toLocaleString('ja-JP')}`
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10)
+  const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10)
+
+  const [{ data: monthOrders }, { data: prevMonthOrders }, { data: materials }] = await Promise.all([
+    supabase
+      .from('sales_orders')
+      .select('id, sales_order_items(amount)')
+      .gte('order_date', monthStart)
+      .lte('order_date', monthEnd)
+      .neq('status', 'cancelled'),
+    supabase
+      .from('sales_orders')
+      .select('id, sales_order_items(amount)')
+      .gte('order_date', prevMonthStart)
+      .lte('order_date', prevMonthEnd)
+      .neq('status', 'cancelled'),
+    supabase
+      .from('materials')
+      .select('current_stock, safety_stock, stock_managed')
+      .eq('is_active', true),
+  ])
+
+  const sumOrderAmount = (orders: { sales_order_items?: { amount: number }[] }[] | null) =>
+    (orders ?? []).reduce(
+      (sum, o) => sum + (o.sales_order_items ?? []).reduce((s, i) => s + Number(i.amount || 0), 0),
+      0
+    )
+
+  const monthSales = sumOrderAmount(monthOrders)
+  const prevMonthSales = sumOrderAmount(prevMonthOrders)
+  const orderCount = monthOrders?.length ?? 0
+
+  const salesDiffLabel =
+    prevMonthSales > 0
+      ? `前月比 ${monthSales >= prevMonthSales ? '+' : ''}${Math.round(((monthSales - prevMonthSales) / prevMonthSales) * 1000) / 10}%`
+      : '前月比 —'
+
+  const stockAlertCount = (materials ?? []).filter(
+    (m) => m.stock_managed && m.safety_stock !== null && m.current_stock < m.safety_stock
+  ).length
+
+  const summaryCards = [
+    { label: '今月の売上', value: fmtYen(monthSales), sub: salesDiffLabel, icon: '💹' },
+    { label: '受注件数', value: `${orderCount} 件`, sub: '今月', icon: '📋' },
+    { label: '在庫アラート', value: `${stockAlertCount} 件`, sub: '要補充（材料）', icon: '⚠️' },
+  ]
 
   return (
     <div className="p-8">
@@ -17,7 +71,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* サマリーカード */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {summaryCards.map((card) => (
           <div
             key={card.label}
@@ -57,13 +111,6 @@ export default async function DashboardPage() {
     </div>
   )
 }
-
-const summaryCards = [
-  { label: '今月の売上', value: '¥0', sub: '前月比 —', icon: '💹' },
-  { label: '受注件数', value: '0 件', sub: '今月', icon: '📋' },
-  { label: '在庫アラート', value: '0 件', sub: '要補充', icon: '⚠️' },
-  { label: '未処理タスク', value: '0 件', sub: '本日', icon: '✅' },
-]
 
 const notices = [
   { id: 1, title: 'システムが正常に起動しました', date: '2026-04-06' },
