@@ -26,7 +26,7 @@ export default async function EditSalesOrderPage({
       .single(),
     supabase.from('customers').select('id, name')
       .eq('type', 'customer').eq('is_active', true).order('name'),
-    supabase.from('products').select('id, product_no, name, selling_price, cost_confirmed')
+    supabase.from('products').select('id, product_no, name, selling_price, cost_confirmed, client_id')
       .eq('status', 'active').order('product_no'),
     supabase.from('product_variants').select('id, product_id, color_name, size_label'),
     supabase.from('employees').select('id, name, department')

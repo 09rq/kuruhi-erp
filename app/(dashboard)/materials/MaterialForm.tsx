@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createMaterial, updateMaterial } from './actions'
+import SearchableSelect from '@/components/SearchableSelect'
 import type { Material } from '@/lib/types/material'
 import {
   MATERIAL_CATEGORIES,
@@ -60,6 +61,7 @@ export default function MaterialForm({ material, suppliers = [] }: Props) {
   const [procurementType,   setProcurementType]   = useState<'buy' | 'supplied'>(
     material?.procurement_type ?? 'buy'
   )
+  const [supplierId, setSupplierId] = useState(material?.supplier_id ?? '')
 
   const isSupplied = procurementType === 'supplied'
 
@@ -232,16 +234,17 @@ export default function MaterialForm({ material, suppliers = [] }: Props) {
         <h2 className="text-sm font-semibold text-gray-700 mb-4">取引先情報</h2>
         <div className="grid grid-cols-2 gap-4">
           <Field label="仕入先 / 支給元" colSpan>
-            <Select name="supplier_id" defaultValue={material?.supplier_id ?? ''}>
-              <option value="">未設定</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.type === 'customer'
-                    ? `【販売先】${s.name}（支給元）`
-                    : `【仕入先】${s.name}`}
-                </option>
-              ))}
-            </Select>
+            <SearchableSelect
+              name="supplier_id"
+              value={supplierId}
+              onChange={(id) => setSupplierId(id)}
+              options={suppliers.map((s) => ({
+                id: s.id,
+                label: s.type === 'customer' ? `【販売先】${s.name}（支給元）` : `【仕入先】${s.name}`,
+              }))}
+              placeholder="取引先名で検索"
+              className={cls}
+            />
           </Field>
           <Field label="発注方法">
             <Select name="order_method" defaultValue={material?.order_method ?? ''}>

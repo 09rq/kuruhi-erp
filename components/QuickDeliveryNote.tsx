@@ -3,9 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FileDown, Loader2, Plus, Trash2, RefreshCw } from 'lucide-react'
+import SearchableSelect from '@/components/SearchableSelect'
 
 interface DeliveryItem {
   sales_order_item_id: string | null
+  product_id: string | null
   product_name: string
   product_no: string
   quantity: number
@@ -24,12 +26,13 @@ export default function QuickDeliveryNote() {
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([])
   const [customerSearch, setCustomerSearch] = useState('')
   const [salesOrders, setSalesOrders] = useState<{ id: string; order_number: string; customer_id: string }[]>([])
+  const [products, setProducts] = useState<{ id: string; name: string; product_no: string; selling_price: number | null; standard_cost: number | null; client_id: string | null }[]>([])
   const [customerId, setCustomerId] = useState('')
   const [salesOrderId, setSalesOrderId] = useState('')
   const [deliveryType, setDeliveryType] = useState<typeof DELIVERY_TYPES[number]>('量産')
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split('T')[0])
   const [items, setItems] = useState<DeliveryItem[]>([
-    { sales_order_item_id: null, product_name: '', product_no: '', quantity: 1, unit_price: 0, amount: 0, unit_cost: 0, cost_amount: 0, cost_overridden: false, notes: '' }
+    { sales_order_item_id: null, product_id: null, product_name: '', product_no: '', quantity: 1, unit_price: 0, amount: 0, unit_cost: 0, cost_amount: 0, cost_overridden: false, notes: '' }
   ])
   const [pdfLoading, setPdfLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -41,6 +44,8 @@ export default function QuickDeliveryNote() {
       .then(({ data }) => setCustomers(data || []))
     supabase.from('sales_orders').select('id, order_number, client_id').in('status', ['confirmed', 'in_production']).order('order_number', { ascending: false })
       .then(({ data }) => setSalesOrders((data || []).map(o => ({ id: o.id, order_number: o.order_number, customer_id: o.client_id }))))
+    supabase.from('products').select('id, name, product_no, selling_price, standard_cost, client_id').eq('status', 'active').order('product_no')
+      .then(({ data }) => setProducts(data || []))
   }, [supabase])
 
   async function handleLoadFromOrder(orderId: string) {
@@ -65,6 +70,7 @@ export default function QuickDeliveryNote() {
           const qty = remaining > 0 ? remaining : item.quantity
           return {
             sales_order_item_id: item.id,
+            product_id: item.product_id || null,
             product_name: product?.name || '',
             product_no: product?.product_no || '',
             quantity: qty,
@@ -96,7 +102,7 @@ export default function QuickDeliveryNote() {
   }
 
   function addItem() {
-    setItems(prev => [...prev, { sales_order_item_id: null, product_name: '', product_no: '', quantity: 1, unit_price: 0, amount: 0, unit_cost: 0, cost_amount: 0, cost_overridden: false, notes: '' }])
+    setItems(prev => [...prev, { sales_order_item_id: null, product_id: null, product_name: '', product_no: '', quantity: 1, unit_price: 0, amount: 0, unit_cost: 0, cost_amount: 0, cost_overridden: false, notes: '' }])
   }
 
   function removeItem(idx: number) {
@@ -417,8 +423,26 @@ export default function QuickDeliveryNote() {
             return (
               <div key={idx} className="grid grid-cols-12 px-3 py-2 border-b border-gray-100 items-center gap-1">
                 <div className="col-span-3">
-                  <input type="text" value={item.product_name} onChange={e => updateItem(idx, { product_name: e.target.value })}
-                    placeholder="商品名" className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <SearchableSelect
+                    value={item.product_id ?? ''}
+                    onChange={(id, opt) => {
+                      const prod = products.find(p => p.id === id)
+                      updateItem(idx, {
+                        product_id: id || null,
+                        product_name: prod?.name ?? opt?.label ?? '',
+                        product_no: prod?.product_no ?? '',
+                        unit_price: prod?.selling_price ?? item.unit_price,
+                        unit_cost: prod?.standard_cost ?? item.unit_cost,
+                      })
+                    }}
+                    options={(customerId
+                      ? products.filter(p => p.client_id === customerId || p.id === item.product_id)
+                      : products
+                    ).map(p => ({ id: p.id, label: p.name, sublabel: p.product_no }))}
+                    placeholder="商品名で検索"
+                    emptyText={customerId ? 'このクライアントに紐づく製品がありません' : '該当する製品がありません'}
+                    className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
                   <input type="text" value={item.product_no} onChange={e => updateItem(idx, { product_no: e.target.value })}
                     placeholder="品番" className="w-full text-xs border border-gray-200 rounded px-2 py-1 mt-0.5 text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                 </div>

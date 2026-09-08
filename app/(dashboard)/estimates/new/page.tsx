@@ -18,7 +18,7 @@ export default async function EstimateNewPage() {
       .order('name'),
     supabase
       .from('products')
-      .select('id, name, selling_price, variants:product_variants(id, color_name, material, size_label)')
+      .select('id, name, selling_price, client_id, variants:product_variants(id, color_name, material, size_label)')
       .eq('status', 'active')
       .order('name'),
     supabase.rpc('generate_estimate_number'),
@@ -28,6 +28,7 @@ export default async function EstimateNewPage() {
     id:            p.id,
     name:          p.name,
     selling_price: p.selling_price,
+    client_id:     p.client_id,
     variants: (p.variants as { id: string; color_name: string | null; material: string | null; size_label: string | null }[] ?? [])
       .map((v) => ({
         id:    v.id,

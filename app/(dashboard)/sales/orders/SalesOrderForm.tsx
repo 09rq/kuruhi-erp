@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { createSalesOrder, updateSalesOrder } from './actions'
 import { SO_STATUS_LABELS, type SOStatus, type SalesOrder, type SalesOrderItem, type SOItemRow } from '@/lib/types/sales-order'
+import SearchableSelect from '@/components/SearchableSelect'
 
 // ─── Props 型 ───────────────────────────────────────────────────────────────
 interface ClientOption   { id: string; name: string }
-interface ProductOption  { id: string; product_no: string; name: string; selling_price: number | null; cost_confirmed: boolean }
+interface ProductOption  { id: string; product_no: string; name: string; selling_price: number | null; cost_confirmed: boolean; client_id: string | null }
 interface VariantOption  { id: string; product_id: string; color_name: string | null; size_label: string | null }
 interface EmployeeOption { id: string; name: string; department: string | null }
 
@@ -137,16 +138,14 @@ export default function SalesOrderForm({ order, clients, products, variants, emp
             <label className="block text-xs font-medium text-gray-600 mb-1">
               クライアント <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <select value={clientId} onChange={(e) => setClientId(e.target.value)}
-                className={`${cls} appearance-none pr-7`} required>
-                <option value="">選択してください</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">▼</span>
-            </div>
+            <SearchableSelect
+              value={clientId}
+              onChange={(id) => setClientId(id)}
+              options={clients.map((c) => ({ id: c.id, label: c.name }))}
+              placeholder="クライアント名で検索"
+              className={cls}
+              required
+            />
           </div>
 
           {/* ステータス */}
@@ -230,21 +229,23 @@ export default function SalesOrderForm({ order, clients, products, variants, emp
                 const amount = (parseInt(String(row.quantity ?? 0)) || 0) * (parseFloat(String(row.unit_price ?? 0)) || 0)
                 const selectedProduct = row.product_id ? products.find((p) => p.id === row.product_id) : null
                 const isUnconfirmed = selectedProduct != null && !selectedProduct.cost_confirmed
+                // クライアントが選択されている場合は、製品マスタでそのクライアントに紐づく製品のみに絞り込む
+                // （既に選択済みの製品は、クライアント変更後も表示が消えないよう残す）
+                const rowProducts = clientId
+                  ? products.filter((p) => p.client_id === clientId || p.id === row.product_id)
+                  : products
                 return (
                   <tr key={row._key} className="group">
                     {/* 製品 */}
                     <td className="py-2 pr-2">
-                      <div className="relative">
-                        <select value={row.product_id ?? ""}
-                          onChange={(e) => handleProductChange(row._key ?? "", e.target.value)}
-                          className={`${selCls} pr-5`}>
-                          <option value="">製品を選択</option>
-                          {products.map((p) => (
-                            <option key={p.id} value={p.id}>{p.product_no} — {p.name}</option>
-                          ))}
-                        </select>
-                        <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400" style={{ fontSize: 9 }}>▼</span>
-                      </div>
+                      <SearchableSelect
+                        value={row.product_id ?? ''}
+                        onChange={(id) => handleProductChange(row._key ?? '', id)}
+                        options={rowProducts.map((p) => ({ id: p.id, label: `${p.product_no} — ${p.name}` }))}
+                        placeholder="製品名・品番で検索"
+                        className={`${cellCls}`}
+                        emptyText={clientId ? 'このクライアントに紐づく製品がありません' : '該当する製品がありません'}
+                      />
                       {isUnconfirmed && (
                         <p className="mt-0.5 text-amber-600 text-xs font-medium">⚠️ 標準原価未確定</p>
                       )}

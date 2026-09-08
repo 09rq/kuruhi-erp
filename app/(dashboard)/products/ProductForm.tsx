@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { createProduct, updateProduct } from './actions'
+import SearchableSelect from '@/components/SearchableSelect'
 import type {
   Product, ProductCategory, ProductVariant, ProductCostItem,
   ProductStatus, VariantStatus, CostMode,
@@ -320,9 +321,9 @@ function MaterialRow({
           />
         )}
       </td>
-      {/* 材料名（簡易：テキスト / 標準：コンボボックス） */}
+      {/* 材料名（材料マスタから検索して選択。マスタが空の場合のみ手入力にフォールバック） */}
       <td className="px-2 py-1.5" style={{ width: 260, minWidth: 260 }}>
-        {isStandard ? (
+        {materialOptions.length > 0 ? (
           <MaterialCombobox
             value={row.name}
             options={materialOptions}
@@ -915,6 +916,7 @@ export default function ProductForm({
   // 基本情報
   const [productNo, setProductNo] = useState(product?.product_no ?? initialProductNo ?? '')
   const [status, setStatus] = useState<ProductStatus>(src?.status ?? 'active')
+  const [clientId, setClientId] = useState(product?.client_id ?? copyFrom?.client_id ?? '')
   const [brandName,  setBrandName]  = useState(src?.brand_name  ?? '')
   const [seriesName, setSeriesName] = useState(src?.series_name ?? '')
   const [brandOpen, setBrandOpen] = useState(false)
@@ -1207,14 +1209,14 @@ export default function ProductForm({
           </Field>
 
           <Field label="クライアント">
-            <SelWrap>
-              <select name="client_id" defaultValue={product?.client_id ?? copyFrom?.client_id ?? ''} className={`${cls} appearance-none`}>
-                <option value="">未設定</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </SelWrap>
+            <SearchableSelect
+              name="client_id"
+              value={clientId}
+              onChange={(id) => setClientId(id)}
+              options={clients.map((c) => ({ id: c.id, label: c.name }))}
+              placeholder="クライアント名で検索"
+              className={cls}
+            />
           </Field>
 
           <Field label="クライアント品番">
@@ -1297,7 +1299,7 @@ export default function ProductForm({
           <CostTable
             headers={[
               '区分', '取引先',
-              costMode === 'standard' ? '材料マスタ' : '材料名',
+              '材料マスタ',
               '備考', '数量', '横幅(cm)', '歩留', '実値数量', '単価（円）', '金額',
             ]}
             minWidth="960px"

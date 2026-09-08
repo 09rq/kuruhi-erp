@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createEstimate, updateEstimate } from './actions'
 import type { Estimate, EstimateItemRow } from '@/lib/types/estimate'
+import SearchableSelect from '@/components/SearchableSelect'
 
 interface Client { id: string; name: string }
 interface ProductVariant { id: string; label: string }
@@ -12,6 +13,7 @@ interface ProductOption {
   name: string
   selling_price: number | null
   variants: ProductVariant[]
+  client_id: string | null
 }
 
 interface Props {
@@ -178,19 +180,13 @@ export default function EstimateForm({ estimate, clients, products, estimateNumb
 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">クライアント</label>
-              <div className="relative">
-                <select
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  className={`${cls} appearance-none`}
-                >
-                  <option value="">未設定</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">▼</span>
-              </div>
+              <SearchableSelect
+                value={clientId}
+                onChange={(id) => setClientId(id)}
+                options={clients.map((c) => ({ id: c.id, label: c.name }))}
+                placeholder="クライアント名で検索"
+                className={cls}
+              />
             </div>
 
             <div>
@@ -291,7 +287,13 @@ export default function EstimateForm({ estimate, clients, products, estimateNumb
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {items.map((row, idx) => (
+                {items.map((row, idx) => {
+                  // クライアントが選択されている場合は、製品マスタでそのクライアントに紐づく製品のみに絞り込む
+                  // （既に選択済みの製品は、クライアント変更後も表示が消えないよう残す）
+                  const rowProducts = clientId
+                    ? products.filter((p) => p.client_id === clientId || p.id === row.product_id)
+                    : products
+                  return (
                   <tr key={row._key} className="hover:bg-gray-50/50">
                     {/* 順序 */}
                     <td className="px-1 py-2 text-center">
@@ -305,19 +307,14 @@ export default function EstimateForm({ estimate, clients, products, estimateNumb
 
                     {/* 製品選択 */}
                     <td className="px-2 py-2">
-                      <div className="relative">
-                        <select
-                          value={row.product_id ?? ""}
-                          onChange={(e) => handleProductSelect(row._key ?? "", e.target.value)}
-                          className={`${cellCls} appearance-none pr-6 text-xs`}
-                        >
-                          <option value="">手入力</option>
-                          {products.map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
-                        <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">▼</span>
-                      </div>
+                      <SearchableSelect
+                        value={row.product_id ?? ''}
+                        onChange={(id) => handleProductSelect(row._key ?? '', id)}
+                        options={rowProducts.map((p) => ({ id: p.id, label: p.name }))}
+                        placeholder="製品名で検索（手入力も可）"
+                        className={`${cellCls} text-xs`}
+                        emptyText={clientId ? 'このクライアントに紐づく製品がありません' : '該当する製品がありません'}
+                      />
                       {/* バリエーション */}
                       {row.product_id && products.find((p) => p.id === row.product_id)?.variants?.length! > 0 && (
                         <div className="relative mt-1">
@@ -416,7 +413,8 @@ export default function EstimateForm({ estimate, clients, products, estimateNumb
                       </button>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
