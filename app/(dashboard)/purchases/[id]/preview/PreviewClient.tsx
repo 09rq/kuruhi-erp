@@ -34,6 +34,7 @@ const STATUS_FLOW: { from: POStatus[]; to: POStatus; label: string; color: strin
   { from: ['ordered'],           to: 'awaiting_delivery', label: '納品待ちにする', color: 'bg-amber-500' },
   { from: ['awaiting_delivery'], to: 'delivered',         label: '納品済にする',   color: 'bg-emerald-600' },
   { from: ['draft','ordered','awaiting_delivery'], to: 'cancelled', label: 'キャンセル', color: 'bg-red-500' },
+  { from: ['cancelled'],         to: 'draft',             label: '下書きに戻す',   color: 'bg-gray-500' },
 ]
 
 export default function PreviewClient({ order, company, employeeName }: Props) {
