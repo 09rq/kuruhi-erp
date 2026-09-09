@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { DollarSign, ChevronDown, ChevronUp } from 'lucide-react'
+import { DollarSign, ChevronDown, ChevronUp, CalendarRange } from 'lucide-react'
 
 interface SgaItem {
   account_name: string
@@ -26,6 +26,35 @@ export default function SgaTable({ yearMonth, fullYearRange }: Props) {
   const [saving, setSaving] = useState(false)
   const [showAll, setShowAll] = useState(false)
 
+  // ── この表だけの「期間で集計」機能（親の月選択とは独立） ──────────────
+  const [customRangeOn, setCustomRangeOn] = useState(false)
+  const [availableMonths, setAvailableMonths] = useState<string[]>([])
+  const [rangeStart, setRangeStart] = useState('')
+  const [rangeEnd, setRangeEnd] = useState('')
+
+  useEffect(() => {
+    supabase
+      .from('budget_actuals')
+      .select('year_month')
+      .eq('report_type', 'pl')
+      .eq('account_category', '販売管理費')
+      .then(({ data }) => {
+        const months = [...new Set((data || []).map(d => d.year_month))]
+          .filter(m => /^\d{4}-\d{2}$/.test(m))
+          .sort()
+        setAvailableMonths(months)
+        if (months.length > 0) {
+          setRangeStart(prev => prev || months[Math.max(0, months.length - 3)])
+          setRangeEnd(prev => prev || months[months.length - 1])
+        }
+      })
+  }, [supabase])
+
+  // 期間で集計がONの場合はその範囲を、OFFなら親から渡された通期レンジ（あれば）を使う
+  const effectiveRange = customRangeOn && rangeStart && rangeEnd
+    ? { start: rangeStart, end: rangeEnd }
+    : (fullYearRange ?? null)
+
   const EXCLUDE = ['販売管理費 計', '営業外費用', '営業外収益', '営業損益金額', '経常損益金額', '税引前当期純損益金額', '当期純損益金額', '支払利息', '受取利息', '雑収入', '受取配当金']
 
   const fetchData = useCallback(async () => {
@@ -38,10 +67,10 @@ export default function SgaTable({ yearMonth, fullYearRange }: Props) {
         .eq('account_category', '販売管理費')
       let budgetsQuery = supabase.from('budgets').select('account_name, budget_amount, year_month')
 
-      if (fullYearRange) {
-        // 通期（年間累計）：期間内の全月を合算する
-        actualsQuery = actualsQuery.gte('year_month', fullYearRange.start).lte('year_month', fullYearRange.end)
-        budgetsQuery = budgetsQuery.gte('year_month', fullYearRange.start).lte('year_month', fullYearRange.end)
+      if (effectiveRange) {
+        // 期間集計：期間内の全月を合算する
+        actualsQuery = actualsQuery.gte('year_month', effectiveRange.start).lte('year_month', effectiveRange.end)
+        budgetsQuery = budgetsQuery.gte('year_month', effectiveRange.start).lte('year_month', effectiveRange.end)
       } else {
         actualsQuery = actualsQuery.eq('year_month', yearMonth)
         budgetsQuery = budgetsQuery.eq('year_month', yearMonth)
@@ -53,7 +82,7 @@ export default function SgaTable({ yearMonth, fullYearRange }: Props) {
       const budgetMap: Record<string, number> = {}
       budgets?.forEach(b => { budgetMap[b.account_name] = (budgetMap[b.account_name] || 0) + Number(b.budget_amount) })
 
-      // 実績と予算の両方を統合（どちらかあれば表示）。通期の場合は期間内の月を合算する。
+      // 実績と予算の両方を統合（どちらかあれば表示）。期間集計の場合は期間内の月を合算する。
       const actualMap: Record<string, number> = {}
       ;(actuals || []).filter(a => !EXCLUDE.includes(a.account_name)).forEach(a => {
         actualMap[a.account_name] = (actualMap[a.account_name] || 0) + Number(a.balance)
@@ -76,7 +105,7 @@ export default function SgaTable({ yearMonth, fullYearRange }: Props) {
 
       setItems(merged)
     } catch (e) { console.error(e) } finally { setLoading(false) }
-  }, [supabase, yearMonth, fullYearRange])
+  }, [supabase, yearMonth, effectiveRange?.start, effectiveRange?.end])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -99,20 +128,60 @@ export default function SgaTable({ yearMonth, fullYearRange }: Props) {
   const totalBudget = items.reduce((s, i) => s + i.budget, 0)
   const totalDiff = totalActual - totalBudget
   const displayItems = showAll ? items : items.slice(0, 10)
+  const monthCount = effectiveRange
+    ? availableMonths.filter(m => m >= effectiveRange.start && m <= effectiveRange.end).length
+    : 1
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 mt-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-green-600" />
           <h3 className="text-sm font-bold text-gray-900">販管費 予実管理</h3>
-          {fullYearRange && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">通期（年間累計）</span>
+          {effectiveRange && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+              {customRangeOn ? `期間集計（${effectiveRange.start}〜${effectiveRange.end}／${monthCount}ヶ月分）` : '通期（年間累計）'}
+            </span>
           )}
         </div>
         <div className={`text-sm font-bold px-3 py-1 rounded-full ${totalDiff > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
           合計差異: {totalDiff > 0 ? '▲' : '▼'} {Math.abs(totalDiff).toLocaleString()}円
         </div>
+      </div>
+
+      {/* この表だけの期間集計コントロール */}
+      <div className="flex items-center gap-2 flex-wrap mb-4 pb-4 border-b border-gray-100">
+        <button
+          onClick={() => setCustomRangeOn(v => !v)}
+          className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+            customRangeOn ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+          }`}
+        >
+          <CalendarRange className="h-3.5 w-3.5" />
+          期間で集計
+        </button>
+        {customRangeOn && (
+          <>
+            <select
+              value={rangeStart}
+              onChange={e => setRangeStart(e.target.value)}
+              className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {availableMonths.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+            <span className="text-xs text-gray-400">〜</span>
+            <select
+              value={rangeEnd}
+              onChange={e => setRangeEnd(e.target.value)}
+              className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {availableMonths.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+            {rangeStart > rangeEnd && (
+              <span className="text-xs text-red-500">開始月は終了月より前にしてください</span>
+            )}
+          </>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -121,7 +190,7 @@ export default function SgaTable({ yearMonth, fullYearRange }: Props) {
             <tr>
               <th className="text-left text-xs font-medium text-gray-500 px-3 py-2">勘定科目</th>
               <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">実績（円）</th>
-              <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">予算（円）</th>
+              <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">予算（円）{effectiveRange && customRangeOn && <span className="font-normal text-gray-400">（{monthCount}ヶ月合計）</span>}</th>
               <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">差異（円）</th>
               <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">達成率</th>
               <th className="text-center text-xs font-medium text-gray-500 px-3 py-2">操作</th>
@@ -167,7 +236,7 @@ export default function SgaTable({ yearMonth, fullYearRange }: Props) {
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="text-center px-3 py-2">
-                    {fullYearRange ? (
+                    {effectiveRange ? (
                       <span className="text-xs text-gray-300">-</span>
                     ) : isEditing ? (
                       <div className="flex gap-1 justify-center">
