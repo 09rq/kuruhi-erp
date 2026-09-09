@@ -242,6 +242,7 @@ export default function PreviewClient({ order, company, employeeName }: Props) {
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="text-left p-2.5 font-medium text-gray-600">品目</th>
+                    <th className="text-left p-2.5 font-medium text-gray-600">色</th>
                     <th className="text-right p-2.5 font-medium text-gray-600">発注数量</th>
                     <th className="text-right p-2.5 font-medium text-gray-600 w-32">実納品数量</th>
                     <th className="text-left p-2.5 font-medium text-gray-600 w-16">単位</th>
@@ -251,6 +252,7 @@ export default function PreviewClient({ order, company, employeeName }: Props) {
                   {order.items.map((item) => (
                     <tr key={item.id} className="border-b border-gray-100 last:border-0">
                       <td className="p-2.5 text-gray-800">{item.item_name}</td>
+                      <td className="p-2.5 text-gray-600">{item.color || '—'}</td>
                       <td className="p-2.5 text-right text-gray-500">{item.quantity}</td>
                       <td className="p-2.5">
                         <input
