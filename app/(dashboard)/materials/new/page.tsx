@@ -7,7 +7,6 @@ export default async function MaterialNewPage() {
   const { data: suppliers } = await supabase
     .from('customers')
     .select('id, name, type')
-    .in('type', ['vendor_material', 'customer'])
     .eq('is_active', true)
     .order('name', { ascending: true })
 

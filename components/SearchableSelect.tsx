@@ -26,7 +26,9 @@ const defaultInputCls =
   'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864] disabled:bg-gray-50 disabled:text-gray-400'
 
 function normalize(s: string) {
-  return s.toLowerCase().trim()
+  // 全角英数字・半角カナなどを正規化してから比較することで、
+  // 全角/半角の表記ゆれがあっても検索でヒットするようにする
+  return s.normalize('NFKC').toLowerCase().trim()
 }
 
 /**

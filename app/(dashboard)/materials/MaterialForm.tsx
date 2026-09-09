@@ -240,7 +240,9 @@ export default function MaterialForm({ material, suppliers = [] }: Props) {
               onChange={(id) => setSupplierId(id)}
               options={suppliers.map((s) => ({
                 id: s.id,
-                label: s.type === 'customer' ? `【販売先】${s.name}（支給元）` : `【仕入先】${s.name}`,
+                label: s.type === 'customer' ? `【販売先】${s.name}（支給元）`
+                     : s.type === 'vendor_processing' ? `【外注先】${s.name}`
+                     : `【仕入先】${s.name}`,
               }))}
               placeholder="取引先名で検索"
               className={cls}

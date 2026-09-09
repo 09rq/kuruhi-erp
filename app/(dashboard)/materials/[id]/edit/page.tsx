@@ -16,7 +16,6 @@ export default async function MaterialEditPage({
     supabase
       .from('customers')
       .select('id, name, type')
-      .in('type', ['vendor_material', 'customer'])
       .eq('is_active', true)
       .order('name', { ascending: true }),
   ])
