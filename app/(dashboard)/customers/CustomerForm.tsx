@@ -11,6 +11,7 @@ import { MATERIAL_CATEGORIES } from '@/lib/types/material'
 
 interface Props {
   customer?: Customer
+  copyFrom?: Customer
   employees?: EmployeeOption[]
 }
 
@@ -27,16 +28,17 @@ function validateInvoiceNumber(value: string): string | null {
   return null
 }
 
-export default function CustomerForm({ customer, employees = [] }: Props) {
+export default function CustomerForm({ customer, copyFrom, employees = [] }: Props) {
   const router = useRouter()
   const isEdit = !!customer
+  const src = customer ?? copyFrom
   const [pending, setPending] = useState(false)
   const [type, setType] = useState<CustomerType>(
-    customer?.type ?? 'customer'
+    src?.type ?? 'customer'
   )
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
   const [subCategory, setSubCategory] = useState<string>(
-    customer?.sub_category ?? ''
+    src?.sub_category ?? ''
   )
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -128,7 +130,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="name"
-              defaultValue={customer?.name}
+              defaultValue={src?.name}
               required
               placeholder="株式会社〇〇"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
@@ -141,7 +143,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="name_kana"
-              defaultValue={customer?.name_kana ?? ''}
+              defaultValue={src?.name_kana ?? ''}
               placeholder="カブシキガイシャ〇〇"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -153,7 +155,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="short_name"
-              defaultValue={customer?.short_name ?? ''}
+              defaultValue={src?.short_name ?? ''}
               placeholder="〇〇社"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -165,7 +167,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="contact_person"
-              defaultValue={customer?.contact_person ?? ''}
+              defaultValue={src?.contact_person ?? ''}
               placeholder="山田 太郎"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -241,7 +243,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
               <input
                 type="text"
                 name="invoice_number"
-                defaultValue={customer?.invoice_number ?? ''}
+                defaultValue={src?.invoice_number ?? ''}
                 placeholder="T1234567890123"
                 maxLength={14}
                 onChange={(e) => {
@@ -275,7 +277,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="postal_code"
-              defaultValue={customer?.postal_code ?? ''}
+              defaultValue={src?.postal_code ?? ''}
               placeholder="000-0000"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -287,7 +289,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="address"
-              defaultValue={customer?.address ?? ''}
+              defaultValue={src?.address ?? ''}
               placeholder="東京都〇〇区〇〇1-2-3"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -299,7 +301,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="tel"
               name="phone"
-              defaultValue={customer?.phone ?? ''}
+              defaultValue={src?.phone ?? ''}
               placeholder="03-0000-0000"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -311,7 +313,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="tel"
               name="mobile"
-              defaultValue={customer?.mobile ?? ''}
+              defaultValue={src?.mobile ?? ''}
               placeholder="090-0000-0000"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -323,7 +325,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="tel"
               name="fax"
-              defaultValue={customer?.fax ?? ''}
+              defaultValue={src?.fax ?? ''}
               placeholder="03-0000-0001"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -335,7 +337,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="email"
               name="email"
-              defaultValue={customer?.email ?? ''}
+              defaultValue={src?.email ?? ''}
               placeholder="info@example.com"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -352,7 +354,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
           </label>
           <PaymentTermsPicker
             name="payment_terms"
-            defaultValue={customer?.payment_terms}
+            defaultValue={src?.payment_terms}
           />
         </div>
       </div>
@@ -373,7 +375,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="bank_name"
-              defaultValue={customer?.bank_name ?? ''}
+              defaultValue={src?.bank_name ?? ''}
               placeholder="〇〇銀行"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -385,7 +387,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="bank_branch"
-              defaultValue={customer?.bank_branch ?? ''}
+              defaultValue={src?.bank_branch ?? ''}
               placeholder="〇〇支店"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -396,7 +398,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             </label>
             <select
               name="bank_account_type"
-              defaultValue={customer?.bank_account_type ?? ''}
+              defaultValue={src?.bank_account_type ?? ''}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             >
               <option value="">未設定</option>
@@ -414,7 +416,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="bank_account_no"
-              defaultValue={customer?.bank_account_no ?? ''}
+              defaultValue={src?.bank_account_no ?? ''}
               placeholder="0000000"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -426,7 +428,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
             <input
               type="text"
               name="bank_account_name"
-              defaultValue={customer?.bank_account_name ?? ''}
+              defaultValue={src?.bank_account_name ?? ''}
               placeholder="カブシキガイシャ〇〇"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             />
@@ -444,7 +446,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
           <div className="relative">
             <select
               name="assigned_employee_id"
-              defaultValue={customer?.assigned_employee_id ?? ''}
+              defaultValue={src?.assigned_employee_id ?? ''}
               className="appearance-none w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
             >
               <option value="">未割り当て</option>
@@ -471,7 +473,7 @@ export default function CustomerForm({ customer, employees = [] }: Props) {
         <h2 className="text-sm font-semibold text-gray-700 mb-4">備考</h2>
         <textarea
           name="note"
-          defaultValue={customer?.note ?? ''}
+          defaultValue={src?.note ?? ''}
           rows={4}
           placeholder="特記事項・注意事項など"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864] resize-none"

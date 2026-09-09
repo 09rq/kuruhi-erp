@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import CustomerForm from '../../CustomerForm'
 
-export default async function CustomerEditPage({
+export default async function CustomerCopyPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -30,22 +30,16 @@ export default async function CustomerEditPage({
             取引先管理
           </Link>
           <span>/</span>
-          <span className="text-gray-900">編集</span>
+          <span className="text-gray-900">コピーして新規登録</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          {customer.name}
-          <span className="text-base font-mono font-normal text-gray-400">
-            {customer.code}
-          </span>
-          <Link
-            href={`/customers/copy/${id}`}
-            className="ml-auto text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50"
-          >
-            この内容をコピーして新規登録
-          </Link>
+        <h1 className="text-2xl font-bold text-gray-900">
+          「{customer.name}」の内容をコピーして新規登録
         </h1>
+        <p className="mt-1 text-sm text-gray-500">
+          区分だけ選び直して登録してください。取引先コードは新しく発行されます。
+        </p>
       </div>
-      <CustomerForm customer={customer} employees={employees ?? []} />
+      <CustomerForm copyFrom={customer} employees={employees ?? []} />
     </div>
   )
 }

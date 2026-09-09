@@ -206,6 +206,12 @@ export default async function CustomersPage({
                         >
                           編集
                         </Link>
+                        <Link
+                          href={`/customers/copy/${customer.id}`}
+                          className="px-2.5 py-1 text-xs rounded border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          コピー
+                        </Link>
                         <CustomerDeleteButton id={customer.id} name={customer.name} />
                       </div>
                     </td>
