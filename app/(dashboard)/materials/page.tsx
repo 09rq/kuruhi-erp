@@ -63,6 +63,12 @@ export default async function MaterialsPage({
           <p className="mt-1 text-sm text-gray-500">材料・副資材の登録・管理</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/materials/groups"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50"
+          >
+            🗂️ 材料グループ管理
+          </Link>
           <MaterialImportWrapper />
           <MaterialCSVButton materials={filtered} />
           <Link

@@ -4,11 +4,18 @@ import MaterialForm from '../MaterialForm'
 
 export default async function MaterialNewPage() {
   const supabase = await createClient()
-  const { data: suppliers } = await supabase
-    .from('customers')
-    .select('id, name, type')
-    .eq('is_active', true)
-    .order('name', { ascending: true })
+  const [{ data: suppliers }, { data: groups }] = await Promise.all([
+    supabase
+      .from('customers')
+      .select('id, name, type')
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
+    supabase
+      .from('material_groups')
+      .select('id, name, standard_price')
+      .eq('is_active', true)
+      .order('name'),
+  ])
 
   return (
     <div className="p-8">
@@ -20,7 +27,7 @@ export default async function MaterialNewPage() {
         </div>
         <h1 className="text-2xl font-bold text-gray-900">材料 新規登録</h1>
       </div>
-      <MaterialForm suppliers={suppliers ?? []} />
+      <MaterialForm suppliers={suppliers ?? []} groups={groups ?? []} />
     </div>
   )
 }

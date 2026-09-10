@@ -46,7 +46,7 @@ export default async function ProductEditPage({
       .order('name'),
     supabase
       .from('materials')
-      .select('id, name, code, standard_price, category, unit, short_name, supplier:customers(short_name)')
+      .select('id, name, code, standard_price, category, unit, short_name, group_id, supplier:customers(short_name)')
       .eq('is_active', true)
       .order('name'),
     supabase
@@ -77,6 +77,7 @@ export default async function ProductEditPage({
       category:            m.category ?? undefined,
       unit:                m.unit ?? null,
       short_name:          m.short_name ?? null,
+      group_id:            m.group_id ?? null,
       supplier_short_name: (sup as { short_name?: string } | null)?.short_name ?? null,
     }
   })

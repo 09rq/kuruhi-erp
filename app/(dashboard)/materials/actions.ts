@@ -55,15 +55,33 @@ function buildPayload(formData: FormData) {
     lot_management:     formData.get('lot_management') === 'true',
     note:               toStr(formData.get('note')),
     is_active:          formData.get('is_active') === 'true',
+    group_id:           toStr(formData.get('group_id')),
+    price_overridden:   formData.get('price_overridden') === 'true',
   }
+}
+
+// グループに所属していて、個別単価にしていない場合は、グループの単価で上書きする
+async function applyGroupPrice(supabase: Awaited<ReturnType<typeof createClient>>, payload: Record<string, unknown>) {
+  if (payload.group_id && !payload.price_overridden) {
+    const { data: group } = await supabase
+      .from('material_groups')
+      .select('standard_price')
+      .eq('id', payload.group_id as string)
+      .single()
+    if (group) {
+      payload.standard_price = group.standard_price
+    }
+  }
+  return payload
 }
 
 export async function createMaterial(formData: FormData) {
   const supabase = await createClient()
   const code = await generateCode()
+  const payload = await applyGroupPrice(supabase, buildPayload(formData))
   const { error } = await supabase
     .from('materials')
-    .insert({ code, ...buildPayload(formData) })
+    .insert({ code, ...payload })
   if (error) throw new Error(error.message)
   revalidatePath('/materials')
   redirect('/materials')
@@ -71,9 +89,10 @@ export async function createMaterial(formData: FormData) {
 
 export async function updateMaterial(id: string, formData: FormData) {
   const supabase = await createClient()
+  const payload = await applyGroupPrice(supabase, buildPayload(formData))
   const { error } = await supabase
     .from('materials')
-    .update(buildPayload(formData))
+    .update(payload)
     .eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/materials')

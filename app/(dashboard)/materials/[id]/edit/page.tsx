@@ -11,13 +11,18 @@ export default async function MaterialEditPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: material, error }, { data: suppliers }] = await Promise.all([
+  const [{ data: material, error }, { data: suppliers }, { data: groups }] = await Promise.all([
     supabase.from('materials').select('*').eq('id', id).single(),
     supabase
       .from('customers')
       .select('id, name, type')
       .eq('is_active', true)
       .order('name', { ascending: true }),
+    supabase
+      .from('material_groups')
+      .select('id, name, standard_price')
+      .eq('is_active', true)
+      .order('name'),
   ])
 
   if (error || !material) notFound()
@@ -37,7 +42,7 @@ export default async function MaterialEditPage({
           </span>
         </h1>
       </div>
-      <MaterialForm material={material} suppliers={suppliers ?? []} />
+      <MaterialForm material={material} suppliers={suppliers ?? []} groups={groups ?? []} />
     </div>
   )
 }

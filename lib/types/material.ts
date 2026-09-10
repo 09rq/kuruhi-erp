@@ -48,6 +48,8 @@ export interface Material {
   storage_location: string | null
   shelf_number: string | null
   lot_management: boolean
+  group_id: string | null
+  price_overridden: boolean
   note: string | null
   is_active: boolean
   created_at: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { createProduct, updateProduct } from './actions'
@@ -23,7 +23,7 @@ interface Client { id: string; name: string }
 interface MaterialOption {
   id: string; name: string; code: string; standard_price: number | null
   category?: string; unit?: string | null; short_name?: string | null
-  supplier_short_name?: string | null
+  supplier_short_name?: string | null; group_id?: string | null
 }
 interface VendorOption { id: string; name: string; short_name: string }
 interface SupplierOption { id: string; name: string; short_name: string | null }
@@ -905,6 +905,21 @@ export default function ProductForm({
   const router = useRouter()
   const isEdit = !!product
   const formRef = useRef<HTMLFormElement>(null)
+
+  // 材料マスタ検索の候補は「材料グループ」単位でまとめる（色違いを1件ずつ出さない）。
+  // グループ化されていない材料はそのまま個別に表示する。
+  const dedupedMaterialOptions = useMemo(() => {
+    const seenGroups = new Set<string>()
+    const result: MaterialOption[] = []
+    for (const m of materialOptions) {
+      if (m.group_id) {
+        if (seenGroups.has(m.group_id)) continue
+        seenGroups.add(m.group_id)
+      }
+      result.push(m)
+    }
+    return result
+  }, [materialOptions])
 
   // コピー元を含む初期値ソース（編集時はproduct、コピー時はcopyFrom）
   const src = product ?? copyFrom

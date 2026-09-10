@@ -15,10 +15,12 @@ import {
 import type { EmployeeOption } from '@/lib/types/employee'
 
 interface Supplier { id: string; name: string; type: string }
+interface GroupOption { id: string; name: string; standard_price: number | null }
 
 interface Props {
   material?: Material
   suppliers?: Supplier[]
+  groups?: GroupOption[]
 }
 
 const cls =
@@ -51,7 +53,7 @@ function Select({ name, defaultValue, children }: {
   )
 }
 
-export default function MaterialForm({ material, suppliers = [] }: Props) {
+export default function MaterialForm({ material, suppliers = [], groups = [] }: Props) {
   const router = useRouter()
   const isEdit = !!material
   const [pending,           setPending]           = useState(false)
@@ -62,6 +64,9 @@ export default function MaterialForm({ material, suppliers = [] }: Props) {
     material?.procurement_type ?? 'buy'
   )
   const [supplierId, setSupplierId] = useState(material?.supplier_id ?? '')
+  const [groupId, setGroupId] = useState(material?.group_id ?? '')
+  const [priceOverridden, setPriceOverridden] = useState(material?.price_overridden ?? false)
+  const selectedGroup = groups.find(g => g.id === groupId) ?? null
 
   const isSupplied = procurementType === 'supplied'
 
@@ -192,6 +197,40 @@ export default function MaterialForm({ material, suppliers = [] }: Props) {
         </div>
       </section>
 
+      {/* 材料グループ（色違いなどをまとめて単価を一元管理） */}
+      <section className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-1">材料グループ</h2>
+        <p className="text-xs text-gray-400 mb-3">
+          色違いなど、同じ材料の複数バリエーションをグループにまとめると単価を一元管理できます。
+          <a href="/materials/groups" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">グループ管理を開く</a>
+        </p>
+        <SearchableSelect
+          name="group_id"
+          value={groupId}
+          onChange={(id) => { setGroupId(id); if (!id) setPriceOverridden(false) }}
+          options={groups.map((g) => ({
+            id: g.id,
+            label: g.name,
+            sublabel: g.standard_price !== null ? `単価 ${g.standard_price.toLocaleString()}円` : '単価未設定',
+          }))}
+          placeholder="グループ名で検索（未設定のままでもOK）"
+          className={cls}
+        />
+        {groupId && (
+          <label className="flex items-center gap-2 mt-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              name="price_overridden"
+              value="true"
+              checked={priceOverridden}
+              onChange={(e) => setPriceOverridden(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700">この色だけ個別の単価にする（グループの単価変更と連動させない）</span>
+          </label>
+        )}
+      </section>
+
       {/* 在庫評価単価 */}
       <section className={`bg-white rounded-xl border p-6 ${isSupplied ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'}`}>
         <h2 className="text-sm font-semibold text-gray-700 mb-1">在庫評価単価</h2>
@@ -200,12 +239,17 @@ export default function MaterialForm({ material, suppliers = [] }: Props) {
             ※ 支給部材のため在庫評価単価は ¥0 に固定されます
           </p>
         )}
+        {groupId && !priceOverridden && !isSupplied && (
+          <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 mb-3">
+            ※ 標準単価はグループ「{selectedGroup?.name}」の単価と連動しています（このフォームからは変更できません）
+          </p>
+        )}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: '標準単価', name: 'standard_price', val: isSupplied ? 0 : material?.standard_price },
-            { label: '月初単価', name: 'month_start_price', val: isSupplied ? 0 : material?.month_start_price },
-            { label: '月末単価', name: 'month_end_price', val: isSupplied ? 0 : material?.month_end_price },
-          ].map(({ label, name, val }) => (
+            { label: '標準単価', name: 'standard_price', val: isSupplied ? 0 : (groupId && !priceOverridden ? selectedGroup?.standard_price ?? 0 : material?.standard_price), lockedByGroup: Boolean(groupId) && !priceOverridden },
+            { label: '月初単価', name: 'month_start_price', val: isSupplied ? 0 : material?.month_start_price, lockedByGroup: false },
+            { label: '月末単価', name: 'month_end_price', val: isSupplied ? 0 : material?.month_end_price, lockedByGroup: false },
+          ].map(({ label, name, val, lockedByGroup }) => (
             <div key={name}>
               <label className="block text-xs font-medium text-gray-600 mb-1">{label}（円）</label>
               <div className="relative">
@@ -213,14 +257,14 @@ export default function MaterialForm({ material, suppliers = [] }: Props) {
                 <input
                   type="number"
                   name={name}
-                  value={isSupplied ? 0 : undefined}
-                  defaultValue={isSupplied ? undefined : (val ?? '')}
-                  readOnly={isSupplied}
+                  value={isSupplied ? 0 : (lockedByGroup ? (val ?? 0) : undefined)}
+                  defaultValue={isSupplied || lockedByGroup ? undefined : (val ?? '')}
+                  readOnly={isSupplied || lockedByGroup}
                   min={0}
                   step="0.01"
                   placeholder="0"
                   className={`w-full pl-7 pr-3 py-2 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1F3864] ${
-                    isSupplied ? 'bg-gray-100 border-gray-200 text-gray-400' : 'border-gray-300'
+                    isSupplied || lockedByGroup ? 'bg-gray-100 border-gray-200 text-gray-400' : 'border-gray-300'
                   }`}
                 />
               </div>
