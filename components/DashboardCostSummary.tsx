@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, CalendarRange } from 'lucide-react'
 
 interface BudgetActual {
   account_name: string
@@ -30,6 +30,9 @@ export default function DashboardCostSummary() {
   const [fiscalYearTargets, setFiscalYearTargets] = useState<FiscalYearTarget[]>([])
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<number | null>(null)
   const [selectedMonth, setSelectedMonth] = useState('')
+  const [customRangeOn, setCustomRangeOn] = useState(false)
+  const [customRangeStart, setCustomRangeStart] = useState('')
+  const [customRangeEnd, setCustomRangeEnd] = useState('')
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -86,11 +89,16 @@ export default function DashboardCostSummary() {
     : null
   const isFullYear = selectedMonth === FULL_YEAR_VALUE
 
-  // 「通期（年間累計）」が選ばれている場合は、選択中の期に含まれる月を全て合算する
-  const filteredActuals: BudgetActual[] = (isFullYear && activeFyTarget)
+  // 「期間で集計」がONの場合はその範囲を、OFFなら「通期（年間累計）」の範囲（あれば）を使う
+  const effectiveRange = customRangeOn && customRangeStart && customRangeEnd
+    ? { start: customRangeStart, end: customRangeEnd }
+    : (isFullYear && activeFyTarget ? { start: activeFyTarget.start_month, end: activeFyTarget.end_month } : null)
+
+  // 期間集計（通期 or 期間で集計）が選ばれている場合は、範囲内の月を全て合算する
+  const filteredActuals: BudgetActual[] = effectiveRange
     ? (() => {
         const inRange = budgetActuals.filter(a =>
-          a.year_month >= activeFyTarget.start_month && a.year_month <= activeFyTarget.end_month
+          a.year_month >= effectiveRange.start && a.year_month <= effectiveRange.end
         )
         const merged: Record<string, BudgetActual> = {}
         inRange.forEach(a => {
@@ -169,6 +177,51 @@ export default function DashboardCostSummary() {
             })()}
           </select>
         </div>
+        <div className="self-end">
+          <button
+            onClick={() => setCustomRangeOn(v => !v)}
+            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border transition-colors ${
+              customRangeOn ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+            }`}
+          >
+            <CalendarRange className="h-3.5 w-3.5" />
+            期間で集計
+          </button>
+        </div>
+        {customRangeOn && (() => {
+          const allMonths = [...new Set(budgetActuals.map(a => a.year_month))]
+            .filter(m => /^\d{4}-\d{2}$/.test(m))
+            .sort()
+          return (
+            <>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">開始月</label>
+                <select
+                  value={customRangeStart}
+                  onChange={e => setCustomRangeStart(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">選択</option>
+                  {allMonths.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">終了月</label>
+                <select
+                  value={customRangeEnd}
+                  onChange={e => setCustomRangeEnd(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">選択</option>
+                  {allMonths.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              {customRangeStart && customRangeEnd && customRangeStart > customRangeEnd && (
+                <p className="self-end pb-2 text-xs text-red-500">開始月は終了月より前にしてください</p>
+              )}
+            </>
+          )
+        })()}
       </div>
 
       {revenue === 0 ? (
@@ -196,7 +249,14 @@ export default function DashboardCostSummary() {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-gray-900 mb-4">原価率分析（KPI目標との比較）</h3>
+            <h3 className="text-sm font-bold text-gray-900 mb-4">
+              原価率分析（KPI目標との比較）
+              {customRangeOn && customRangeStart && customRangeEnd && (
+                <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 align-middle">
+                  期間集計（{customRangeStart}〜{customRangeEnd}）
+                </span>
+              )}
+            </h3>
             <div className="space-y-4">
               {[
                 { label: '材料費率', actual: materialRate, target: 18.5, amount: materialCost },
