@@ -183,12 +183,13 @@ export default async function MaterialsPage({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[900px]">
+            <table className="w-full text-sm min-w-[980px]">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-4 py-3 text-left font-medium text-gray-600 w-28">品目コード</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600 w-24">区分</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600">材料名</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 w-20">色</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600 w-16">単位</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600 w-16">調達</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-600 w-28">標準単価</th>
@@ -222,6 +223,7 @@ export default async function MaterialsPage({
                           <div className="text-xs text-gray-400">{mat.short_name}</div>
                         )}
                       </td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">{mat.color_cd || '—'}</td>
                       <td className="px-4 py-3 text-gray-600">{mat.unit}</td>
                       <td className="px-4 py-3">
                         {mat.procurement_type === 'supplied' ? (
