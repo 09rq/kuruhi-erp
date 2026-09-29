@@ -8,6 +8,7 @@ import {
 import MaterialDeleteButton from './MaterialDeleteButton'
 import MaterialCSVButton from './MaterialCSVButton'
 import MaterialImportWrapper from './MaterialImportWrapper'
+import MaterialSupplierFilter from './MaterialSupplierFilter'
 
 interface SearchParams { q?: string; category?: string; stock_alert?: string; status?: string; supplier_id?: string }
 
@@ -176,20 +177,7 @@ export default async function MaterialsPage({
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">仕入先</label>
-          <select
-            name="supplier_id"
-            defaultValue={supplier_id ?? ''}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none max-w-56"
-          >
-            <option value="">すべて</option>
-            {(allSuppliers ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.type === 'customer' ? `【販売先】${s.name}`
-                  : s.type === 'vendor_processing' ? `【外注先】${s.name}`
-                  : `【仕入先】${s.name}`}
-              </option>
-            ))}
-          </select>
+          <MaterialSupplierFilter suppliers={allSuppliers ?? []} initialValue={supplier_id ?? ''} />
         </div>
         {stock_alert === '1' && (
           <input type="hidden" name="stock_alert" value="1" />
