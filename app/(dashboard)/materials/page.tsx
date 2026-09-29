@@ -9,7 +9,7 @@ import MaterialDeleteButton from './MaterialDeleteButton'
 import MaterialCSVButton from './MaterialCSVButton'
 import MaterialImportWrapper from './MaterialImportWrapper'
 
-interface SearchParams { q?: string; category?: string; stock_alert?: string; status?: string }
+interface SearchParams { q?: string; category?: string; stock_alert?: string; status?: string; supplier_id?: string }
 
 function fmt(n: number | null) {
   if (n === null) return '—'
@@ -21,8 +21,14 @@ export default async function MaterialsPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
-  const { q, category, stock_alert, status } = await searchParams
+  const { q, category, stock_alert, status, supplier_id } = await searchParams
   const supabase = await createClient()
+
+  const { data: allSuppliers } = await supabase
+    .from('customers')
+    .select('id, name, type')
+    .eq('is_active', true)
+    .order('name', { ascending: true })
 
   let query = supabase
     .from('materials')
@@ -51,6 +57,7 @@ export default async function MaterialsPage({
   if (category && category !== 'all') query = query.eq('category', category)
   if (status === 'active')   query = query.eq('is_active', true)
   if (status === 'inactive') query = query.eq('is_active', false)
+  if (supplier_id) query = query.eq('supplier_id', supplier_id)
 
   const { data: materials, error } = await query
 
@@ -165,6 +172,23 @@ export default async function MaterialsPage({
             <option value="all">すべて</option>
             <option value="active">有効</option>
             <option value="inactive">無効</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">仕入先</label>
+          <select
+            name="supplier_id"
+            defaultValue={supplier_id ?? ''}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none max-w-56"
+          >
+            <option value="">すべて</option>
+            {(allSuppliers ?? []).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.type === 'customer' ? `【販売先】${s.name}`
+                  : s.type === 'vendor_processing' ? `【外注先】${s.name}`
+                  : `【仕入先】${s.name}`}
+              </option>
+            ))}
           </select>
         </div>
         {stock_alert === '1' && (
