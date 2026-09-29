@@ -19,6 +19,7 @@ interface GroupOption { id: string; name: string; standard_price: number | null 
 
 interface Props {
   material?: Material
+  copyFrom?: Material
   suppliers?: Supplier[]
   groups?: GroupOption[]
 }
@@ -53,19 +54,21 @@ function Select({ name, defaultValue, children }: {
   )
 }
 
-export default function MaterialForm({ material, suppliers = [], groups = [] }: Props) {
+export default function MaterialForm({ material, copyFrom, suppliers = [], groups = [] }: Props) {
   const router = useRouter()
   const isEdit = !!material
+  const isCopy = !isEdit && !!copyFrom
+  const src = material ?? copyFrom
   const [pending,           setPending]           = useState(false)
-  const [stockManaged,      setStockManaged]      = useState(material?.stock_managed ?? true)
-  const [inventoryCategory, setInventoryCategory] = useState(material?.inventory_category ?? true)
-  const [lotManagement,     setLotManagement]     = useState(material?.lot_management ?? false)
+  const [stockManaged,      setStockManaged]      = useState(src?.stock_managed ?? true)
+  const [inventoryCategory, setInventoryCategory] = useState(src?.inventory_category ?? true)
+  const [lotManagement,     setLotManagement]     = useState(src?.lot_management ?? false)
   const [procurementType,   setProcurementType]   = useState<'buy' | 'supplied'>(
-    material?.procurement_type ?? 'buy'
+    src?.procurement_type ?? 'buy'
   )
-  const [supplierId, setSupplierId] = useState(material?.supplier_id ?? '')
-  const [groupId, setGroupId] = useState(material?.group_id ?? '')
-  const [priceOverridden, setPriceOverridden] = useState(material?.price_overridden ?? false)
+  const [supplierId, setSupplierId] = useState(src?.supplier_id ?? '')
+  const [groupId, setGroupId] = useState(src?.group_id ?? '')
+  const [priceOverridden, setPriceOverridden] = useState(src?.price_overridden ?? false)
   const selectedGroup = groups.find(g => g.id === groupId) ?? null
 
   const isSupplied = procurementType === 'supplied'
@@ -108,13 +111,13 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
               type="text"
               name="name"
               required
-              defaultValue={material?.name}
+              defaultValue={src?.name}
               placeholder="牛革 ブラック"
               className={cls}
             />
           </Field>
           <Field label="材料区分" required>
-            <Select name="category" defaultValue={material?.category ?? ''}>
+            <Select name="category" defaultValue={src?.category ?? ''}>
               <option value="" disabled>選択してください</option>
               {MATERIAL_CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -122,7 +125,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             </Select>
           </Field>
           <Field label="単位" required>
-            <Select name="unit" defaultValue={material?.unit ?? '個'}>
+            <Select name="unit" defaultValue={src?.unit ?? '個'}>
               {MATERIAL_UNITS.map((u) => (
                 <option key={u} value={u}>{u}</option>
               ))}
@@ -132,7 +135,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             <input
               type="text"
               name="short_name"
-              defaultValue={material?.short_name ?? ''}
+              defaultValue={src?.short_name ?? ''}
               placeholder="牛革BK"
               className={cls}
             />
@@ -141,7 +144,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             <input
               type="text"
               name="spec"
-              defaultValue={material?.spec ?? ''}
+              defaultValue={src?.spec ?? ''}
               placeholder="A4 / 0.8mm厚"
               className={cls}
             />
@@ -150,7 +153,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             <input
               type="text"
               name="color_cd"
-              defaultValue={material?.color_cd ?? ''}
+              defaultValue={src?.color_cd ?? ''}
               placeholder="BK"
               className={cls}
             />
@@ -159,7 +162,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             <input
               type="text"
               name="jan_cd"
-              defaultValue={material?.jan_cd ?? ''}
+              defaultValue={src?.jan_cd ?? ''}
               placeholder="4900000000000"
               className={`${cls} font-mono`}
             />
@@ -246,9 +249,9 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
         )}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: '標準単価', name: 'standard_price', val: isSupplied ? 0 : (groupId && !priceOverridden ? selectedGroup?.standard_price ?? 0 : material?.standard_price), lockedByGroup: Boolean(groupId) && !priceOverridden },
-            { label: '月初単価', name: 'month_start_price', val: isSupplied ? 0 : material?.month_start_price, lockedByGroup: false },
-            { label: '月末単価', name: 'month_end_price', val: isSupplied ? 0 : material?.month_end_price, lockedByGroup: false },
+            { label: '標準単価', name: 'standard_price', val: isSupplied ? 0 : (groupId && !priceOverridden ? selectedGroup?.standard_price ?? 0 : src?.standard_price), lockedByGroup: Boolean(groupId) && !priceOverridden },
+            { label: '月初単価', name: 'month_start_price', val: isSupplied ? 0 : src?.month_start_price, lockedByGroup: false },
+            { label: '月末単価', name: 'month_end_price', val: isSupplied ? 0 : src?.month_end_price, lockedByGroup: false },
           ].map(({ label, name, val, lockedByGroup }) => (
             <div key={name}>
               <label className="block text-xs font-medium text-gray-600 mb-1">{label}（円）</label>
@@ -293,7 +296,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             />
           </Field>
           <Field label="発注方法">
-            <Select name="order_method" defaultValue={material?.order_method ?? ''}>
+            <Select name="order_method" defaultValue={src?.order_method ?? ''}>
               <option value="">未設定</option>
               {ORDER_METHODS.map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -304,7 +307,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             <input
               type="number"
               name="order_lot"
-              defaultValue={material?.order_lot ?? ''}
+              defaultValue={src?.order_lot ?? ''}
               min={0}
               step="0.001"
               placeholder="1"
@@ -312,7 +315,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             />
           </Field>
           <Field label="課税区分">
-            <Select name="tax_type" defaultValue={material?.tax_type ?? ''}>
+            <Select name="tax_type" defaultValue={src?.tax_type ?? ''}>
               <option value="">未設定</option>
               {TAX_TYPES.map((t) => (
                 <option key={t} value={t}>{t}</option>
@@ -320,7 +323,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             </Select>
           </Field>
           <Field label="消費税率">
-            <Select name="tax_rate" defaultValue={material?.tax_rate ?? ''}>
+            <Select name="tax_rate" defaultValue={src?.tax_rate ?? ''}>
               <option value="">未設定</option>
               {TAX_RATES.map((r) => (
                 <option key={r} value={r}>{r}%</option>
@@ -331,7 +334,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             <input
               type="date"
               name="sales_end_date"
-              defaultValue={material?.sales_end_date ?? ''}
+              defaultValue={src?.sales_end_date ?? ''}
               className={cls}
             />
           </Field>
@@ -369,17 +372,22 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
                 <input
                   type="number"
                   name="current_stock"
-                  defaultValue={material?.current_stock ?? 0}
+                  defaultValue={isEdit ? (src?.current_stock ?? 0) : 0}
                   min={0}
                   step="0.001"
                   className={cls}
                 />
+                {isCopy && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    ※ コピー時は現在庫数を0で登録します（在庫は個別に管理してください）
+                  </p>
+                )}
               </Field>
               <Field label="安全在庫数">
                 <input
                   type="number"
                   name="safety_stock"
-                  defaultValue={material?.safety_stock ?? ''}
+                  defaultValue={src?.safety_stock ?? ''}
                   min={0}
                   step="0.001"
                   placeholder="0"
@@ -393,7 +401,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
                 <input
                   type="number"
                   name="reorder_point"
-                  defaultValue={material?.reorder_point ?? ''}
+                  defaultValue={src?.reorder_point ?? ''}
                   min={0}
                   step="0.001"
                   placeholder="0"
@@ -410,7 +418,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
           <Field label="備考" colSpan>
             <textarea
               name="note"
-              defaultValue={material?.note ?? ''}
+              defaultValue={src?.note ?? ''}
               rows={3}
               placeholder="特記事項など"
               className={`${cls} resize-none`}
@@ -447,7 +455,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             <input
               type="text"
               name="storage_location"
-              defaultValue={material?.storage_location ?? ''}
+              defaultValue={src?.storage_location ?? ''}
               placeholder="倉庫A / 1F資材庫"
               className={cls}
             />
@@ -458,7 +466,7 @@ export default function MaterialForm({ material, suppliers = [], groups = [] }: 
             <input
               type="text"
               name="shelf_number"
-              defaultValue={material?.shelf_number ?? ''}
+              defaultValue={src?.shelf_number ?? ''}
               placeholder="A-01-03"
               className={cls}
             />

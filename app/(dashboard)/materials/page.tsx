@@ -183,7 +183,7 @@ export default async function MaterialsPage({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[980px]">
+            <table className="w-full text-sm min-w-[1040px]">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-4 py-3 text-left font-medium text-gray-600 w-28">品目コード</th>
@@ -270,6 +270,12 @@ export default async function MaterialsPage({
                             className="px-2.5 py-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
                           >
                             編集
+                          </Link>
+                          <Link
+                            href={`/materials/copy/${mat.id}`}
+                            className="px-2.5 py-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                          >
+                            コピー
                           </Link>
                           <MaterialDeleteButton id={mat.id} name={mat.name} />
                         </div>

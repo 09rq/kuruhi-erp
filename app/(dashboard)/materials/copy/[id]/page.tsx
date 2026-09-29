@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import MaterialForm from '../../MaterialForm'
 
-export default async function MaterialEditPage({
+export default async function MaterialCopyPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -33,22 +33,19 @@ export default async function MaterialEditPage({
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
           <Link href="/materials" className="hover:text-gray-700">材料登録</Link>
           <span>/</span>
-          <span className="text-gray-900">編集</span>
+          <span className="text-gray-900">コピーして新規登録</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">
-          {material.name}
-          <span className="ml-3 text-base font-mono font-normal text-gray-400">
-            {material.code}
+          材料 コピーして新規登録
+          <span className="ml-3 text-base font-normal text-gray-400">
+            元：{material.name}（{material.code}）
           </span>
         </h1>
-        <Link
-          href={`/materials/copy/${material.id}`}
-          className="mt-2 inline-block text-sm text-blue-600 hover:underline"
-        >
-          この内容をコピーして新規登録
-        </Link>
+        <p className="mt-1 text-sm text-gray-500">
+          品目コードは新規採番されます。内容を必要に応じて修正してください（色違いの登録などに便利です）。
+        </p>
       </div>
-      <MaterialForm material={material} suppliers={suppliers ?? []} groups={groups ?? []} />
+      <MaterialForm copyFrom={material} suppliers={suppliers ?? []} groups={groups ?? []} />
     </div>
   )
 }
