@@ -30,9 +30,23 @@ export default async function MaterialsPage({
     .order('code', { ascending: true })
 
   if (q) {
-    query = query.or(
-      `name.ilike.%${q}%,code.ilike.%${q}%,short_name.ilike.%${q}%,jan_cd.ilike.%${q}%`
-    )
+    // キーワードが取引先名にヒットする場合は、その取引先IDも検索対象に加える
+    const { data: matchedSuppliers } = await supabase
+      .from('customers')
+      .select('id')
+      .ilike('name', `%${q}%`)
+    const supplierIds = (matchedSuppliers ?? []).map((s) => s.id)
+
+    const orParts = [
+      `name.ilike.%${q}%`,
+      `code.ilike.%${q}%`,
+      `short_name.ilike.%${q}%`,
+      `jan_cd.ilike.%${q}%`,
+    ]
+    if (supplierIds.length > 0) {
+      orParts.push(`supplier_id.in.(${supplierIds.join(',')})`)
+    }
+    query = query.or(orParts.join(','))
   }
   if (category && category !== 'all') query = query.eq('category', category)
   if (status === 'active')   query = query.eq('is_active', true)
@@ -124,7 +138,7 @@ export default async function MaterialsPage({
             type="text"
             name="q"
             defaultValue={q}
-            placeholder="材料名・略称・品目コード・JANCD"
+            placeholder="材料名・略称・品目コード・JANCD・仕入先/支給元名"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3864]"
           />
         </div>
