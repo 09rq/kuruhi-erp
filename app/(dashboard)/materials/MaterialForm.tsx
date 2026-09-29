@@ -22,6 +22,7 @@ interface Props {
   copyFrom?: Material
   suppliers?: Supplier[]
   groups?: GroupOption[]
+  returnTo?: string
 }
 
 const cls =
@@ -54,7 +55,7 @@ function Select({ name, defaultValue, children }: {
   )
 }
 
-export default function MaterialForm({ material, copyFrom, suppliers = [], groups = [] }: Props) {
+export default function MaterialForm({ material, copyFrom, suppliers = [], groups = [], returnTo }: Props) {
   const router = useRouter()
   const isEdit = !!material
   const isCopy = !isEdit && !!copyFrom
@@ -91,6 +92,7 @@ export default function MaterialForm({ material, copyFrom, suppliers = [], group
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
+      {returnTo && <input type="hidden" name="return_to" value={returnTo} />}
 
       {/* 基本情報 */}
       <section className="bg-white rounded-xl border border-gray-200 p-6">

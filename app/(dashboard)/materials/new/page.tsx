@@ -2,7 +2,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import MaterialForm from '../MaterialForm'
 
-export default async function MaterialNewPage() {
+export default async function MaterialNewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ returnTo?: string }>
+}) {
+  const { returnTo } = await searchParams
   const supabase = await createClient()
   const [{ data: suppliers }, { data: groups }] = await Promise.all([
     supabase
@@ -27,7 +32,7 @@ export default async function MaterialNewPage() {
         </div>
         <h1 className="text-2xl font-bold text-gray-900">材料 新規登録</h1>
       </div>
-      <MaterialForm suppliers={suppliers ?? []} groups={groups ?? []} />
+      <MaterialForm suppliers={suppliers ?? []} groups={groups ?? []} returnTo={returnTo} />
     </div>
   )
 }

@@ -22,6 +22,13 @@ function toStr(v: FormDataEntryValue | null): string | null {
   return v && v !== '' ? (v as string) : null
 }
 
+// 登録・更新後に戻る先。外部URLへのリダイレクトを防ぐため /materials 配下のみ許可する
+function resolveReturnTo(formData: FormData): string {
+  const raw = formData.get('return_to')
+  if (typeof raw === 'string' && raw.startsWith('/materials')) return raw
+  return '/materials'
+}
+
 function buildPayload(formData: FormData) {
   const procurementType = (formData.get('procurement_type') as string) || 'buy'
   const isSupplied = procurementType === 'supplied'
@@ -84,7 +91,7 @@ export async function createMaterial(formData: FormData) {
     .insert({ code, ...payload })
   if (error) throw new Error(error.message)
   revalidatePath('/materials')
-  redirect('/materials')
+  redirect(resolveReturnTo(formData))
 }
 
 export async function updateMaterial(id: string, formData: FormData) {
@@ -96,7 +103,7 @@ export async function updateMaterial(id: string, formData: FormData) {
     .eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/materials')
-  redirect('/materials')
+  redirect(resolveReturnTo(formData))
 }
 
 export async function deleteMaterial(id: string) {

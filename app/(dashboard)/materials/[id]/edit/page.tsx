@@ -5,10 +5,13 @@ import MaterialForm from '../../MaterialForm'
 
 export default async function MaterialEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ returnTo?: string }>
 }) {
   const { id } = await params
+  const { returnTo } = await searchParams
   const supabase = await createClient()
 
   const [{ data: material, error }, { data: suppliers }, { data: groups }] = await Promise.all([
@@ -42,13 +45,13 @@ export default async function MaterialEditPage({
           </span>
         </h1>
         <Link
-          href={`/materials/copy/${material.id}`}
+          href={`/materials/copy/${material.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}
           className="mt-2 inline-block text-sm text-blue-600 hover:underline"
         >
           この内容をコピーして新規登録
         </Link>
       </div>
-      <MaterialForm material={material} suppliers={suppliers ?? []} groups={groups ?? []} />
+      <MaterialForm material={material} suppliers={suppliers ?? []} groups={groups ?? []} returnTo={returnTo} />
     </div>
   )
 }

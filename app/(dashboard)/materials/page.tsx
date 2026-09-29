@@ -62,6 +62,16 @@ export default async function MaterialsPage({
 
   const { data: materials, error } = await query
 
+  // 登録・編集・コピー後に、検索済みのこの状態へ戻れるように現在のクエリを保持しておく
+  const returnQs = new URLSearchParams()
+  if (q) returnQs.set('q', q)
+  if (category && category !== 'all') returnQs.set('category', category)
+  if (status && status !== 'all') returnQs.set('status', status)
+  if (supplier_id) returnQs.set('supplier_id', supplier_id)
+  if (stock_alert === '1') returnQs.set('stock_alert', '1')
+  const returnTo = '/materials' + (returnQs.toString() ? `?${returnQs.toString()}` : '')
+  const returnToParam = `returnTo=${encodeURIComponent(returnTo)}`
+
   // 在庫アラート（現在庫 < 安全在庫）
   const alertMaterials = materials?.filter(
     (m) => m.stock_managed && m.safety_stock !== null && m.current_stock < m.safety_stock
@@ -94,7 +104,7 @@ export default async function MaterialsPage({
           <MaterialImportWrapper />
           <MaterialCSVButton materials={filtered} />
           <Link
-            href="/materials/new"
+            href={`/materials/new?${returnToParam}`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white"
             style={{ backgroundColor: '#1F3864' }}
           >
@@ -292,13 +302,13 @@ export default async function MaterialsPage({
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Link
-                            href={`/materials/${mat.id}/edit`}
+                            href={`/materials/${mat.id}/edit?${returnToParam}`}
                             className="px-2.5 py-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
                           >
                             編集
                           </Link>
                           <Link
-                            href={`/materials/copy/${mat.id}`}
+                            href={`/materials/copy/${mat.id}?${returnToParam}`}
                             className="px-2.5 py-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
                           >
                             コピー

@@ -5,10 +5,13 @@ import MaterialForm from '../../MaterialForm'
 
 export default async function MaterialCopyPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ returnTo?: string }>
 }) {
   const { id } = await params
+  const { returnTo } = await searchParams
   const supabase = await createClient()
 
   const [{ data: material, error }, { data: suppliers }, { data: groups }] = await Promise.all([
@@ -45,7 +48,7 @@ export default async function MaterialCopyPage({
           品目コードは新規採番されます。内容を必要に応じて修正してください（色違いの登録などに便利です）。
         </p>
       </div>
-      <MaterialForm copyFrom={material} suppliers={suppliers ?? []} groups={groups ?? []} />
+      <MaterialForm copyFrom={material} suppliers={suppliers ?? []} groups={groups ?? []} returnTo={returnTo} />
     </div>
   )
 }
